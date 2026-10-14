@@ -130,7 +130,7 @@ export function RunPage() {
                         {res.error && <ErrorBanner error={res.error} />}
                         <div>
                           <span className="font-semibold text-slate-500">Output</span>
-                          <pre className="mt-1 whitespace-pre-wrap rounded bg-white p-2 ring-1 ring-slate-200">
+                          <pre className="mt-1 whitespace-pre-wrap rounded-sm bg-white p-2 ring-1 ring-slate-200">
                             {res.output ?? "(none)"}
                           </pre>
                         </div>

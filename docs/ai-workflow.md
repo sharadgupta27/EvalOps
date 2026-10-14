@@ -102,13 +102,20 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   size check; frontend image CVEs (41 → 0); react-router CVEs (v7); Vitest critical (v5);
   Semgrep blind spot (Python 3.12 generics); Prism removed from dev deps.
 - **Accepted (author to confirm):** JWT in localStorage, no per-account lockout, Actions
-  pinned by tag, Tailwind 3 dev-only DoS advisories.
+  pinned by tag. (Tailwind 3 dev-only DoS advisories were accepted first, then fixed in the
+  follow-ups below.)
 
 ### 2026-10-14 · Follow-ups after launch
 - **Daily budget (T7):** `MAX_DAILY_COST_USD` per project per UTC day, checked when a run is
   queued (422), when the worker claims it (fails without calling the model) and after each
   case. Closes the "no daily budget" residual risk. Test:
   `test_daily_budget_blocks_new_runs_and_stops_queued_ones`.
+- **Tailwind 4:** replaced the PostCSS setup with `@tailwindcss/vite`, renamed the utilities
+  v4 changed (`rounded` → `rounded-sm`, `shadow-sm` → `shadow-xs`, `outline-none` →
+  `outline-hidden`) and kept v3's border, placeholder and button-cursor defaults in
+  `src/index.css`. `npm audit` (all deps) 7 → 0. The official upgrade tool was not used: it
+  needs a clean tree or `--force`, so the 10 renames were done by hand and checked with E2E
+  and fresh screenshots.
 - **Alertmanager:** severity routing (`page`/`ticket`), grouping, repeat intervals and an
   inhibit rule (`WorkerDown` suppresses `EvalQueueStuck`); a stdlib webhook sink stands in for
   Slack locally. Drill re-run: one page, the symptom alert suppressed, one "resolved".

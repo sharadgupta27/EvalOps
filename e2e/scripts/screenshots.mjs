@@ -10,7 +10,7 @@ await page.getByLabel("Email").fill("demo@evalops.dev");
 await page.getByLabel("Password").fill(process.env.DEMO_PASSWORD ?? "evalops-demo-2026");
 await page.getByRole("button", { name: "Log in" }).click();
 await page.getByRole("link", { name: "Support reply generator" }).click();
-await page.getByText("#1").waitFor();
+await page.getByRole("link", { name: "#1", exact: true }).waitFor();
 await page.screenshot({ path: `${out}runs.png` });
 await page.goto(`${base}/runs/1`);
 await page.getByText("Pass rate").waitFor();

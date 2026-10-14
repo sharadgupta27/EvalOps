@@ -20,7 +20,7 @@
 
 | Component | Tech | Responsibility |
 |---|---|---|
-| Frontend | React 18, TypeScript, Vite, TanStack Query, React Router 7, Tailwind | UI. All HTTP goes through the client generated from `openapi.yaml` (`src/api/schema.d.ts` + `client.ts`) and is wrapped in query hooks (`src/api/hooks.ts`). Pure logic (`src/lib/`) is unit tested |
+| Frontend | React 18, TypeScript, Vite, TanStack Query, React Router 7, Tailwind 4 | UI. All HTTP goes through the client generated from `openapi.yaml` (`src/api/schema.d.ts` + `client.ts`) and is wrapped in query hooks (`src/api/hooks.ts`). Pure logic (`src/lib/`) is unit tested |
 | API | FastAPI, Pydantic v2, async SQLAlchemy 2 | HTTP only in `api/routes.py`; business logic in `services/`; all SQL in `repositories/`. Domain exceptions map to HTTP in one handler |
 | Worker | same image, asyncio | Claims queued runs, renders each case's prompt, calls the model, runs evaluators, writes results, summarises, enforces the per-run spend cap and the project's daily budget |
 | Evaluators | registry + plugins | `exact_match`, `contains`, `regex`, `json_schema`, `llm_judge`. Config validated per type with Pydantic on create |

@@ -74,7 +74,7 @@ Teams ship prompts and RAG pipelines the way people shipped code before unit tes
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite, TanStack Query, React Router, Tailwind, `openapi-typescript` + `openapi-fetch` |
+| Frontend | React 18 + TypeScript + Vite, TanStack Query, React Router, Tailwind 4, `openapi-typescript` + `openapi-fetch` |
 | Frontend tests | Vitest + React Testing Library; Playwright for E2E |
 | Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, `uv` |
 | Backend tests | pytest, httpx `TestClient`, testcontainers (Postgres) for integration |

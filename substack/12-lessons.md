@@ -60,7 +60,8 @@ portfolio project credible to a reviewer.
 - Propagate trace context through the job queue from day one. I added it as a follow-up; it
   was one column and ten lines, and before it every run showed up as two unrelated traces.
 - Use HttpOnly cookies instead of `localStorage` for the session token.
-- Start on Tailwind 4 and avoid the dev-dependency advisories entirely.
+- Start on Tailwind 4. Migrating later was cheap (an hour), but the advisories sat in the
+  security report as accepted risk until then.
 - Get the real-model judge calibration number earlier: it's the most interesting metric
   in the project and the one I can't fake.
 

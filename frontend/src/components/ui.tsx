@@ -44,7 +44,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={cx("rounded-lg bg-white shadow-sm ring-1 ring-slate-200", className)}>
+    <section className={cx("rounded-lg bg-white shadow-xs ring-1 ring-slate-200", className)}>
       {(title || actions) && (
         <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
@@ -75,7 +75,7 @@ export function Field({
 }
 
 const inputClass =
-  "w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+  "w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500";
 
 export const Input = (props: InputHTMLAttributes<HTMLInputElement>) => (
   <input {...props} className={cx(inputClass, props.className)} />
@@ -135,7 +135,7 @@ export function ScoreBadge({
 
 export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <div className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
       {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}

@@ -1,11 +1,12 @@
 /// <reference types="vitest/config" />
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 // `npm run dev` proxies /api to :8000, which is either the real backend or the Prism mock
 // server started with `npm run mock`, so the UI can be built before the backend exists.
 export default defineConfig(() => ({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
     proxy: {

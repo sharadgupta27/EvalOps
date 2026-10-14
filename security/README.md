@@ -23,16 +23,18 @@ Raw outputs are in [`scans/`](scans/). CI re-runs the same scanners on every PR
 | **Trivy image** frontend | `evalops-frontend:local` | **41** (39 HIGH, 2 CRITICAL) in Alpine 3.21 packages (openssl, libxml2, zlib, musl, …) | 0 | `apk upgrade` in the runtime stage |
 | **pip-audit** | 66 production Python packages | 0 | 0 | none needed |
 | **npm audit** (production deps) | frontend runtime | 0 | 0 | none needed |
-| **npm audit** (incl. dev deps) | frontend toolchain | 24 (2 critical, 12 high) | **7 (5 high, 2 moderate), accepted** | removed Prism from devDependencies (now `npx` on demand); `npm audit fix`; Vitest 3 → 5 (fixes the critical tinypool RCE gadget) |
+| **npm audit** (incl. dev deps) | frontend toolchain | 24 (2 critical, 12 high) | **0** | removed Prism from devDependencies (now `npx` on demand); `npm audit fix`; Vitest 3 → 5 (fixes the critical tinypool RCE gadget); Tailwind 3 → 4 (follow-up, cleared the last 7) |
 
-### Accepted risk
+### Previously accepted risk, now fixed
 
-The 7 remaining dev-dependency findings are all in Tailwind CSS 3's build-time chain
-(`braces`, `micromatch`, `chokidar`, `postcss-selector-parser`): denial-of-service via
-crafted glob patterns or CSS selectors. They run only on developer machines and in CI, on
-inputs we write ourselves, and nothing from them ships to the browser. The fix is Tailwind 4,
-which changes the configuration model. Tracked as follow-up; review by 2026-11-30.
-CI gates on `npm audit --omit=dev --audit-level=high`, which is clean.
+The first pass left 7 dev-dependency findings (5 high, 2 moderate), all in Tailwind CSS 3's
+build-time chain (`braces`, `micromatch`, `chokidar`, `postcss-selector-parser`):
+denial-of-service via crafted glob patterns or CSS selectors. They only ran on developer
+machines and in CI, on inputs we write ourselves, so we accepted them with a review date.
+The follow-up migrated to Tailwind 4 with its Vite plugin (`@tailwindcss/vite`), which also
+removed `postcss`, `autoprefixer` and both config files. `npm audit` including dev
+dependencies now reports **0** ([scans/npm-audit-frontend-all.json](scans/npm-audit-frontend-all.json)).
+CI still gates on `npm audit --omit=dev --audit-level=high`.
 
 ## Application hardening in place
 

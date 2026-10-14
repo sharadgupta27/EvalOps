@@ -110,7 +110,7 @@ The dev machine runs Windows with PowerShell. Prefer commands that work cross-pl
 
 **TypeScript:**
 - `strict` mode, function components and hooks, ESLint + Prettier.
-- Tailwind for styling.
+- Tailwind 4 for styling (CSS-first config in `src/index.css`, no `tailwind.config.js`).
 - No `any` unless justified in a comment.
 
 **Naming:** snake_case for Python and DB columns, camelCase for TS, kebab-case for file names in `frontend/src/components`.

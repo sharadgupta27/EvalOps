@@ -55,7 +55,7 @@ OpenTelemetry ─▶ Collector ─▶ Tempo · Prometheus ─▶ Grafana (dashbo
 
 | Layer | Technology | Role |
 |---|---|---|
-| Frontend | React 18 + TypeScript + Vite, TanStack Query, React Router 7, Tailwind | UI; **all** API calls go through a client generated from `openapi.yaml` and wrapped in query hooks (`frontend/src/api/`) |
+| Frontend | React 18 + TypeScript + Vite, TanStack Query, React Router 7, Tailwind 4 | UI; **all** API calls go through a client generated from `openapi.yaml` and wrapped in query hooks (`frontend/src/api/`) |
 | API contract | OpenAPI 3.1 (`openapi.yaml`) | Source of truth: Spectral lint in CI, generated TS types, backend drift test |
 | Backend | Python 3.12, FastAPI, Pydantic v2, async SQLAlchemy 2, Alembic | Layered `api → services → repositories`; JWT for users, hashed project API keys for machines |
 | Worker | same image, `python -m app.worker` | Postgres job queue, bounded concurrency, per-run and daily spend caps |

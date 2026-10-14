@@ -33,10 +33,14 @@ in our code: OpenSSL, libxml2, zlib and others from the base image's Alpine pack
 One line, `RUN apk upgrade --no-cache`, took it to zero, and the deploy workflow now scans
 images before shipping.
 
-**Accepted risk is a decision, not a shrug.** Seven dev-only advisories remain in Tailwind 3's
-build chain (regex denial-of-service on inputs we write ourselves). Fixing them means migrating
-to Tailwind 4. We documented why the risk is low (build-time only, nothing ships to users),
-what fixes it, and a review date. CI gates on *production* dependencies.
+**Accepted risk is a decision, not a shrug.** After the first round of fixes, seven dev-only
+advisories were left in Tailwind 3's build chain (regex denial-of-service on inputs we write
+ourselves). Fixing them meant migrating to Tailwind 4, so at first we wrote down why the risk
+was low (build-time only, nothing ships to users), what would fix it, and a review date. CI
+gates on *production* dependencies. Then we did the migration as a follow-up: one Vite plugin
+replaced PostCSS, Autoprefixer and two config files, ten class names changed
+(`rounded` → `rounded-sm` and friends), and `npm audit` went from 7 to 0. An accepted risk
+with a written fix is a backlog item, and this one cost an hour.
 
 ## Step 2: AI-assisted review, with a human deciding
 

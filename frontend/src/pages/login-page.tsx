@@ -27,7 +27,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <form
         onSubmit={(e) => void submit(e).catch(() => undefined)}
-        className="w-full max-w-sm space-y-4 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        className="w-full max-w-sm space-y-4 rounded-lg bg-white p-6 shadow-xs ring-1 ring-slate-200"
       >
         <div>
           <h1 className="text-xl font-semibold">EvalOps</h1>

@@ -130,7 +130,7 @@ function OutputDiff({ c }: { c: CompareCase }) {
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <div className="mb-1 text-xs font-semibold text-slate-500">Base output</div>
-          <pre className="whitespace-pre-wrap rounded bg-white p-2 text-xs ring-1 ring-slate-200">
+          <pre className="whitespace-pre-wrap rounded-sm bg-white p-2 text-xs ring-1 ring-slate-200">
             {c.base_output ?? "(none)"}
           </pre>
         </div>
@@ -138,7 +138,7 @@ function OutputDiff({ c }: { c: CompareCase }) {
           <div className="mb-1 text-xs font-semibold text-slate-500">
             Head output (new words highlighted)
           </div>
-          <pre className="whitespace-pre-wrap rounded bg-white p-2 text-xs ring-1 ring-slate-200">
+          <pre className="whitespace-pre-wrap rounded-sm bg-white p-2 text-xs ring-1 ring-slate-200">
             {c.head_output === null
               ? "(none)"
               : highlightNewWords(c.base_output ?? "", c.head_output).map((w, i) =>

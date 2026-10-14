@@ -11,7 +11,7 @@ export function Layout() {
       <nav className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2 font-semibold text-slate-900">
-            <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-xs font-bold text-white">
+            <span className="rounded-sm bg-indigo-600 px-1.5 py-0.5 text-xs font-bold text-white">
               EO
             </span>
             EvalOps

@@ -49,7 +49,9 @@ export function VersionsTab({ projectId }: { projectId: number }) {
               </span>
             }
           >
-            <pre className="whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs">{v.template}</pre>
+            <pre className="whitespace-pre-wrap rounded-sm bg-slate-50 p-2 text-xs">
+              {v.template}
+            </pre>
             <div className="mt-2 flex flex-wrap gap-1 text-xs text-slate-500">
               variables:
               {v.variables.map((name) => (
