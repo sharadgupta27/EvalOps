@@ -13,6 +13,7 @@
                                                      LLMProvider ── AnthropicProvider (prod)
                                                                  └─ FakeProvider (tests, CI, demo)
  Observability: api & worker ─OTLP─▶ OTel Collector ─▶ Tempo (traces);  Prometheus scrapes /metrics; Grafana
+                The API stores the W3C traceparent on the queued row, so API + worker spans form one trace
 ```
 
 ## Components

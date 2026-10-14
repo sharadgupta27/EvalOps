@@ -25,10 +25,11 @@ async def run_once(
         QUEUE_DEPTH.set((await repo.count_runs_by_status()).get("queued", 0))
         run = await repo.claim_next_run()
         run_id = run.id if run else None
+        trace_context = run.trace_context if run else None
     if run_id is None:
         return None
     log.info("claimed run", extra={"run_id": run_id})
-    await execute_run(maker, run_id, provider, settings)
+    await execute_run(maker, run_id, provider, settings, trace_context)
     return run_id
 
 

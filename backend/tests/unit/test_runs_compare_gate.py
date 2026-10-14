@@ -1,5 +1,12 @@
 """US-6 runs, US-7 compare and US-8 gate, executed by the real worker code with FakeProvider."""
 
+import pytest
+from opentelemetry import propagate, trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+from app.observability import tracer
 from app.services.analysis import SCORE_TOLERANCE
 from tests.conftest import (
     SUPPORT_TEMPLATE_V1,
@@ -233,3 +240,42 @@ async def test_api_key_runs_are_tagged_agent(api: Api) -> None:
         json={"prompt_version_id": v1, "dataset_id": ids["dataset_id"]},
     )
     assert run["triggered_by"] == "agent"
+
+
+@pytest.fixture(scope="module")
+def spans() -> InMemorySpanExporter:
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(provider)  # first call wins; later calls only warn
+    return exporter
+
+
+async def test_worker_continues_the_trace_that_queued_the_run(
+    api: Api, spans: InMemorySpanExporter
+) -> None:
+    ids = await setup_project(api)
+    pid = ids["project_id"]
+    v1 = await api.version(pid, "v1", SUPPORT_TEMPLATE_V1)
+    spans.clear()
+    # A caller (the CI gate script, a browser with tracing) sends a W3C traceparent header.
+    with tracer.start_as_current_span("client") as client_span:
+        headers = dict(api.headers)
+        propagate.inject(headers)
+    await api.ok(
+        "POST",
+        f"/projects/{pid}/runs",
+        202,
+        headers=headers,
+        json={"prompt_version_id": v1, "dataset_id": ids["dataset_id"]},
+    )
+    await api.drain()
+
+    trace_id = client_span.get_span_context().trace_id
+    finished = spans.get_finished_spans()
+    api_span_ids = {s.context.span_id for s in finished if s.name.startswith(("POST", "fastapi"))}
+    execute = next(s for s in finished if s.name == "run.execute")
+    assert execute.parent is not None and execute.parent.span_id in api_span_ids
+    assert {s.context.trace_id for s in finished if s.name.startswith(("run.", "case."))} == {
+        trace_id
+    }

@@ -94,9 +94,37 @@ automatically and no data was lost. The full write-up is in
 **Lesson:** an alert you've never seen fire is a hypothesis. A 10-minute drill turns it into
 evidence, and often finds a bug.
 
-## Known gap, stated honestly
+## Concept 5: one trace across the job queue
 
-API and worker traces are separate: they're linked by a `run_id` attribute, not by
-propagated trace context. Passing a `traceparent` through the job row is the next step.
+A trace follows one request through every service it touches. Over HTTP that is automatic:
+the caller sends a `traceparent` header (`00-<trace id>-<parent span id>-01`) and the server
+continues the same trace. A job queue breaks the chain. The API answers `202 Accepted` and
+returns; minutes later the worker picks the row up in a different process with no headers.
+Without help, Tempo shows two unrelated traces: "someone queued a run" and "something ran".
+
+My first version had exactly that gap. The fix is to treat the job row like an HTTP request
+and give it headers:
+
+```python
+# API, inside POST /runs: serialise the active span as W3C headers onto the row
+carrier: dict[str, str] = {}
+propagate.inject(carrier)          # {"traceparent": "00-4bf9...-00f0...-01"}
+run.trace_context = carrier or None
+
+# Worker, after claiming the row: continue that trace
+with tracer.start_as_current_span(
+    "run.execute", context=propagate.extract(run.trace_context or {}), kind=SpanKind.CONSUMER
+):
+    ...
+```
+
+It costs one nullable JSON column (migration `0002`). Now a single trace shows the API
+request, then `run.execute`, then 30 `case.evaluate` spans and 60 `llm.complete` spans (one
+model call and one judge call per case). If the CI gate script sends its own `traceparent`,
+the trace starts in GitHub Actions. A unit test (`test_worker_continues_the_trace_that_queued_the_run`)
+checks that the worker's span is a child of the API's span.
+
+**Lesson:** anywhere work crosses a queue, cron or webhook, carry the trace context
+yourself. No library can guess which row belongs to which request.
 
 **Next:** [Part 9: Skills vs subagents vs MCP vs hooks](09-agent-extension-mental-model.md).

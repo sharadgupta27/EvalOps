@@ -11,13 +11,14 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from opentelemetry.trace import SpanKind
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import Settings
 from app.evaluators import CaseData, EvalDeps, Evaluator, build_evaluator
 from app.llm.base import LLMError, LLMProvider
 from app.models import EvalResult, PromptVersion, RunStatus, TestCase
-from app.observability import CASES_EVALUATED, RUNS_FINISHED, tracer
+from app.observability import CASES_EVALUATED, RUNS_FINISHED, context_from, tracer
 from app.repositories import Repo
 from app.schemas import PromptParams
 from app.services import analysis, templating
@@ -99,8 +100,12 @@ async def execute_run(
     run_id: int,
     provider: LLMProvider,
     settings: Settings,
+    trace_context: dict[str, str] | None = None,
 ) -> None:
-    with tracer.start_as_current_span("run.execute") as span:
+    # Continue the trace of the request that queued the run (POST /runs or /gate).
+    with tracer.start_as_current_span(
+        "run.execute", context=context_from(trace_context), kind=SpanKind.CONSUMER
+    ) as span:
         span.set_attribute("evalops.run_id", run_id)
         try:
             await _execute(maker, run_id, provider, settings)

@@ -166,6 +166,9 @@ class EvalRun(Base):
     total_tokens: Mapped[int] = mapped_column(Integer, default=0)
     cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # W3C trace context (traceparent/tracestate) of the request that queued the run, so
+    # the worker's spans join the API's trace instead of starting a new one.
+    trace_context: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TS, default=utcnow, index=True)
     started_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)

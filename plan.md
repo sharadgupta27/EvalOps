@@ -101,7 +101,8 @@ evaluators       id, project_id, type ENUM, name, config JSON, weight
                  type ∈ {exact_match, contains, regex, json_schema, llm_judge}
 eval_runs        id, project_id, prompt_version_id, dataset_id, status ENUM,
                  triggered_by ENUM{ui, ci, agent}, git_sha, summary JSON,
-                 total_tokens, cost_usd, created_at, started_at, finished_at
+                 total_tokens, cost_usd, trace_context JSON (W3C traceparent),
+                 created_at, started_at, finished_at
                  status ∈ {queued, running, succeeded, failed}
 eval_results     id, run_id, test_case_id, output, scores JSON, passed BOOL,
                  latency_ms, tokens_in, tokens_out, cost_usd, error

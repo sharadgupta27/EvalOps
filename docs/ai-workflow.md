@@ -83,7 +83,9 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 - **Finding during the drill design:** queue-age metric disappeared with the worker, so the
   queue alert could never fire when the worker was dead. Fixed (API exports it too) and proven
   by the drill (`security/ops-drill/`).
-- **Known gap:** API and worker traces are separate (linked by `run_id` attribute, not context propagation).
+- **Follow-up (done):** the API stores the W3C `traceparent` on the queued run (`eval_runs.trace_context`,
+  migration 0002) and the worker continues it, so one Tempo trace spans API → worker → LLM.
+  Verified live: trace `4bf92f…` holds the API request, `run.execute`, 30 `case.evaluate`, 60 `llm.complete`.
 
 ### 2026-10-14 · Phase 8: agent extension pack
 - **Produced:** 3 skills, 3 subagents, MCP server (7 tools, resource, prompt), 3 hooks + audit

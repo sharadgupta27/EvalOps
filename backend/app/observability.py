@@ -5,7 +5,7 @@ import logging
 import sys
 from typing import Any
 
-from opentelemetry import trace
+from opentelemetry import context, propagate, trace
 from prometheus_client import Counter, Gauge, Histogram
 
 from app.config import Settings
@@ -31,6 +31,18 @@ QUEUE_AGE = Gauge("evalops_queue_oldest_age_seconds", "Age of the oldest queued 
 QUEUE_DEPTH = Gauge("evalops_queue_depth", "Queued runs")
 
 tracer = trace.get_tracer("evalops")
+
+
+def current_trace_context() -> dict[str, str] | None:
+    """Serialise the active span as W3C headers, for storing on a queued job."""
+    carrier: dict[str, str] = {}
+    propagate.inject(carrier)
+    return carrier or None
+
+
+def context_from(carrier: dict[str, str] | None) -> context.Context:
+    """Rebuild the context stored by `current_trace_context` (empty context if none)."""
+    return propagate.extract(carrier or {})
 
 
 class JsonFormatter(logging.Formatter):

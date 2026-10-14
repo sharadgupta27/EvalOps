@@ -52,12 +52,13 @@ breaking things on purpose found a blind spot that would have hidden a real outa
 **8. Read the scanner's errors.** "0 findings" with a parse error is not "0 findings".
 
 **9. Document decisions, not just code.** Accepted risks with reasons, "author to confirm"
-markers, honest gaps ("traces aren't linked across the queue yet"). That's what makes a
+markers, honest gaps written down until they're closed. That's what makes a
 portfolio project credible to a reviewer.
 
 ## What I'd do differently
 
-- Propagate trace context through the job queue from day one.
+- Propagate trace context through the job queue from day one. I added it as a follow-up; it
+  was one column and ten lines, and before it every run showed up as two unrelated traces.
 - Use HttpOnly cookies instead of `localStorage` for the session token.
 - Start on Tailwind 4 and avoid the dev-dependency advisories entirely.
 - Get the real-model judge calibration number earlier: it's the most interesting metric

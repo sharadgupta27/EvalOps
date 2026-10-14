@@ -5,6 +5,7 @@ from typing import Any
 from app.errors import Conflict, Invalid, NotFound
 from app.models import EvalRun as EvalRunRow
 from app.models import RunStatus, TriggeredBy
+from app.observability import current_trace_context
 from app.schemas import (
     CompareBucket,
     CompareCase,
@@ -114,6 +115,7 @@ class RunService(Service):
                 git_sha=git_sha,
                 baseline_run_id=baseline_run_id,
                 progress_total=n_cases,
+                trace_context=current_trace_context(),
             )
         )
 
