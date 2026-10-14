@@ -1,0 +1,30 @@
+{"inputs": {"customer": "Ana", "question": "How do I get a refund for a damaged item?"}, "expected_output": "refund", "tags": ["billing"]}
+{"inputs": {"customer": "Ben", "question": "Where is my order? It has been ten days."}, "expected_output": "order", "tags": ["shipping"]}
+{"inputs": {"customer": "Chen", "question": "How can I reset my password?"}, "expected_output": "password", "tags": ["account"]}
+{"inputs": {"customer": "Dara", "question": "Do you ship to Canada?"}, "expected_output": "Canada", "tags": ["shipping"]}
+{"inputs": {"customer": "Eli", "question": "How do I cancel my subscription?"}, "expected_output": "subscription", "tags": ["billing"]}
+{"inputs": {"customer": "Fatima", "question": "Can I change the delivery address after checkout?"}, "expected_output": "address", "tags": ["shipping"]}
+{"inputs": {"customer": "Gus", "question": "Why was my card declined?"}, "expected_output": "card", "tags": ["billing"]}
+{"inputs": {"customer": "Hana", "question": "How do I update my email address on the account?"}, "expected_output": "email", "tags": ["account"]}
+{"inputs": {"customer": "Ivan", "question": "Is there a student discount?"}, "expected_output": "discount", "tags": ["billing"]}
+{"inputs": {"customer": "Jo", "question": "My invoice shows the wrong company name."}, "expected_output": "invoice", "tags": ["billing"]}
+{"inputs": {"customer": "Kemal", "question": "How long does express shipping take?"}, "expected_output": "express", "tags": ["shipping"]}
+{"inputs": {"customer": "Lena", "question": "Can I return an item without the receipt?"}, "expected_output": "receipt", "tags": ["returns"]}
+{"inputs": {"customer": "Mo", "question": "How do I enable two-factor authentication?"}, "expected_output": "two-factor", "tags": ["account"]}
+{"inputs": {"customer": "Nia", "question": "What is your warranty period for laptops?"}, "expected_output": "warranty", "tags": ["product"]}
+{"inputs": {"customer": "Omar", "question": "Can I pause my subscription for a month?"}, "expected_output": "pause", "tags": ["billing"]}
+{"inputs": {"customer": "Priya", "question": "How do I export my data?"}, "expected_output": "export", "tags": ["account"]}
+{"inputs": {"customer": "Quinn", "question": "The app crashes when I upload a photo."}, "expected_output": "upload", "tags": ["product"]}
+{"inputs": {"customer": "Rosa", "question": "Do you offer gift wrapping?"}, "expected_output": "gift", "tags": ["shipping"]}
+{"inputs": {"customer": "Sam", "question": "How do I delete my account permanently?"}, "expected_output": "delete", "tags": ["account"]}
+{"inputs": {"customer": "Tara", "question": "Can I get an invoice with VAT details?"}, "expected_output": "VAT", "tags": ["billing"]}
+{"inputs": {"customer": "Uma", "question": "Is the blue jacket available in size M?"}, "expected_output": "size", "tags": ["product"]}
+{"inputs": {"customer": "Vik", "question": "How do I track my return shipment?"}, "expected_output": "return", "tags": ["returns"]}
+{"inputs": {"customer": "Wen", "question": "Can I change my plan from monthly to annual?"}, "expected_output": "annual", "tags": ["billing"]}
+{"inputs": {"customer": "Xavi", "question": "My discount code is not working."}, "expected_output": "code", "tags": ["billing"]}
+{"inputs": {"customer": "Yara", "question": "How do I contact a human agent?"}, "expected_output": "agent", "tags": ["support"]}
+{"inputs": {"customer": "Zane", "question": "Do you price match competitors?"}, "expected_output": "price", "tags": ["billing"]}
+{"inputs": {"customer": "Abe", "question": "Can I add a second user to my account?"}, "expected_output": "user", "tags": ["account"]}
+{"inputs": {"customer": "Bea", "question": "What payment methods do you accept?"}, "expected_output": "payment", "tags": ["billing"]}
+{"inputs": {"customer": "Cal", "question": "My package arrived empty."}, "expected_output": "package", "tags": ["shipping"]}
+{"inputs": {"customer": "Dev", "question": "How do I unsubscribe from marketing emails?"}, "expected_output": "unsubscribe", "tags": ["account"]}

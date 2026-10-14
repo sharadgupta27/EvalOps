@@ -1,0 +1,31 @@
+customer,question,expected_output,tags
+Ana,How do I get a refund for a damaged item?,refund,billing
+Ben,Where is my order? It has been ten days.,order,shipping
+Chen,How can I reset my password?,password,account
+Dara,Do you ship to Canada?,Canada,shipping
+Eli,How do I cancel my subscription?,subscription,billing
+Fatima,Can I change the delivery address after checkout?,address,shipping
+Gus,Why was my card declined?,card,billing
+Hana,How do I update my email address on the account?,email,account
+Ivan,Is there a student discount?,discount,billing
+Jo,My invoice shows the wrong company name.,invoice,billing
+Kemal,How long does express shipping take?,express,shipping
+Lena,Can I return an item without the receipt?,receipt,returns
+Mo,How do I enable two-factor authentication?,two-factor,account
+Nia,What is your warranty period for laptops?,warranty,product
+Omar,Can I pause my subscription for a month?,pause,billing
+Priya,How do I export my data?,export,account
+Quinn,The app crashes when I upload a photo.,upload,product
+Rosa,Do you offer gift wrapping?,gift,shipping
+Sam,How do I delete my account permanently?,delete,account
+Tara,Can I get an invoice with VAT details?,VAT,billing
+Uma,Is the blue jacket available in size M?,size,product
+Vik,How do I track my return shipment?,return,returns
+Wen,Can I change my plan from monthly to annual?,annual,billing
+Xavi,My discount code is not working.,code,billing
+Yara,How do I contact a human agent?,agent,support
+Zane,Do you price match competitors?,price,billing
+Abe,Can I add a second user to my account?,user,account
+Bea,What payment methods do you accept?,payment,billing
+Cal,My package arrived empty.,package,shipping
+Dev,How do I unsubscribe from marketing emails?,unsubscribe,account
