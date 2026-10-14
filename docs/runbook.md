@@ -32,7 +32,9 @@ Drill: [security/ops-drill/](../security/ops-drill/).
 **`LLMSpendSpike`**: more than $20 per hour.
 1. Grafana "Spend per hour by model": which model?
 2. `GET /api/v1/projects/{id}/runs`: who triggered (`triggered_by`, `git_sha`)? A CI loop?
-3. Revoke the offending API key in the UI; lower `MAX_COST_PER_RUN_USD`; check the gate workflow.
+3. Revoke the offending API key in the UI; lower `MAX_COST_PER_RUN_USD` or `MAX_DAILY_COST_USD`; check the gate workflow.
+   The daily budget already stops a project at `MAX_DAILY_COST_USD` per UTC day: runs then fail with
+   "daily budget reached", which is the signal to investigate rather than raise the cap.
 
 ## Useful commands
 

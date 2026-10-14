@@ -213,7 +213,7 @@ Effort estimates assume part-time work (about 10 h/week).
 - [x] Evaluator plugins: `exact_match`, `contains`, `regex`, `json_schema`, `llm_judge` (rubric prompt that returns structured JSON: `{score: 1-5, reasoning}`)
 - [x] Worker: claims jobs with `SKIP LOCKED`, runs cases with bounded concurrency, writes results, updates the run summary
 - [x] Run-level summary: pass rate, mean score per evaluator, p50/p95 latency, tokens, cost
-- [x] Cost guardrails: max cases per run and max spend per run (configurable)
+- [x] Cost guardrails: max cases per run, max spend per run and a daily budget per project (configurable)
 - [ ] Judge calibration: a small human-labelled set and agreement % reported in the README _(status: set + script done; labels AI-drafted, need human review; real-model agreement not yet measured)_
 
 **Done when:** a 30-case run finishes end to end and the UI shows live progress.
@@ -316,7 +316,7 @@ Effort estimates assume part-time work (about 10 h/week).
 
 | Risk | Mitigation |
 |---|---|
-| LLM API cost during dev and demo | FakeProvider by default, per-run spend cap, small datasets |
+| LLM API cost during dev and demo | FakeProvider by default, per-run spend cap, daily budget per project, small datasets |
 | Flaky LLM-judge scores | temperature 0, structured output, calibration set, report agreement % |
 | Scope creep | Non-goals list; stretch items only after Phase 10 |
 | AWS cost | t3.small + Compose; stop the instance after review period |

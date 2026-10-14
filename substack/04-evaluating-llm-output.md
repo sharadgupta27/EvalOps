@@ -133,8 +133,12 @@ it writes a summary: pass rate, mean score per evaluator, p50/p95 latency, token
 
 ![Run detail](../docs/screenshots/run-detail.png)
 
-Two guardrails protect your wallet: **max cases per run** (rejected up front) and **max spend
+Three guardrails protect your wallet: **max cases per run** (rejected up front), **max spend
 per run** (the run stops as soon as accumulated cost crosses the cap and is marked failed with
-the reason). Both have tests.
+the reason) and a **daily budget per project**. The per-run cap alone doesn't stop a script
+that queues run after run, so the daily budget sums every run the project started since
+midnight UTC and checks it in three places: when a run is queued (fast 422 for the caller),
+when the worker picks it up (runs queued before the money ran out never call the model) and
+after each case. All three have tests.
 
 **Next:** [Part 5: Unit tests for prompts: the CI gate](05-ci-gate.md).

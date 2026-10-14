@@ -54,7 +54,7 @@ cd e2e      && npx playwright test
 - No destructive commands (`rm -rf`, force push, `reset --hard`, dropping tables, `docker volume rm`) and no cloud/deploy actions without explicit approval.
 - Ask before: new dependencies, schema changes, auth/security code, CI/CD or deploy files.
 - The MCP server is read-only + `start_run`, scoped to one project key. See `docs/permissions.md`.
-- Don't raise cost limits (`MAX_CASES_PER_RUN`, `MAX_COST_PER_RUN_USD`) silently.
+- Don't raise cost limits (`MAX_CASES_PER_RUN`, `MAX_COST_PER_RUN_USD`, `MAX_DAILY_COST_USD`) silently.
 
 ## Definition of done
 

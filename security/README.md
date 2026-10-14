@@ -46,8 +46,9 @@ CI gates on `npm audit --omit=dev --audit-level=high`, which is clean.
   before parsing; nginx caps bodies at 3 MB.
 - Strict CORS allowlist (`CORS_ORIGINS`); security headers in the API and nginx; CSP without
   inline scripts on the frontend.
-- Cost guardrails: `MAX_CASES_PER_RUN`, `MAX_COST_PER_RUN_USD` (a run that crosses the cap is
-  stopped and marked failed).
+- Cost guardrails: `MAX_CASES_PER_RUN`; `MAX_COST_PER_RUN_USD` (a run that crosses the cap is
+  stopped and marked failed); `MAX_DAILY_COST_USD` per project per UTC day (new runs are
+  rejected and queued ones fail without calling the model once it is reached).
 - Containers run as non-root; images are rebuilt with OS patches; CI scans images before deploy.
 - LLM judge: untrusted text is delimited and its tags neutralised; the judge has no tools;
   tested by `test_untrusted_output_cannot_escape_delimiters`.

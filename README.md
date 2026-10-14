@@ -26,7 +26,7 @@ tone or a cost spike are found by users, not by CI.
    when all of its evaluators pass.
 4. **Runs**: a background worker executes every case, scores it and reports pass rate,
    per-evaluator means, p50/p95 latency, tokens and cost, with live progress in the UI.
-   Per-run case and spend caps.
+   Per-run case and spend caps, plus a daily budget per project.
 5. **Compare**: per-case diff between two runs (regressed / improved / unchanged), with
    side-by-side outputs.
 6. **CI gate**: `POST /api/v1/gate` with a project API key → `pass`/`fail` plus reasons; the
@@ -58,7 +58,7 @@ OpenTelemetry ─▶ Collector ─▶ Tempo · Prometheus ─▶ Grafana (dashbo
 | Frontend | React 18 + TypeScript + Vite, TanStack Query, React Router 7, Tailwind | UI; **all** API calls go through a client generated from `openapi.yaml` and wrapped in query hooks (`frontend/src/api/`) |
 | API contract | OpenAPI 3.1 (`openapi.yaml`) | Source of truth: Spectral lint in CI, generated TS types, backend drift test |
 | Backend | Python 3.12, FastAPI, Pydantic v2, async SQLAlchemy 2, Alembic | Layered `api → services → repositories`; JWT for users, hashed project API keys for machines |
-| Worker | same image, `python -m app.worker` | Postgres job queue, bounded concurrency, spend cap |
+| Worker | same image, `python -m app.worker` | Postgres job queue, bounded concurrency, per-run and daily spend caps |
 | LLM | Anthropic SDK behind `LLMProvider` | `claude-opus-5-5` by default (`DEFAULT_MODEL`, `JUDGE_MODEL`); FakeProvider for tests and demo |
 | Database | PostgreSQL 16 (dev/prod), SQLite (unit tests) | selected by `DATABASE_URL`; migrations with Alembic |
 | Containers | Docker, Docker Compose | `db`, `migrate`, `api`, `worker`, `frontend` (+ `caddy` in prod) |
@@ -82,7 +82,7 @@ Open http://localhost:5173 and log in as `demo@evalops.dev` with the `DEMO_PASSW
 
 No API key is needed: `LLM_PROVIDER=fake` is the default. To use Claude:
 `LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-... docker compose up -d` (spend is capped by
-`MAX_COST_PER_RUN_USD`, default $2).
+`MAX_COST_PER_RUN_USD`, default $2 per run, and `MAX_DAILY_COST_USD`, default $20 per project per day).
 
 With observability: `docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml up -d --build`
 → Grafana http://localhost:3000, Prometheus http://localhost:9090.

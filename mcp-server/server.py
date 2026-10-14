@@ -4,7 +4,7 @@ Scope and permissions (see ../docs/permissions.md):
 - Authenticates with ONE project API key (EVALOPS_API_KEY). The API itself enforces that the
   key can only see its own project, so the agent cannot reach other projects even if it tries.
 - Tools are read-only, except `start_run`, which queues an evaluation (bounded by the server's
-  MAX_CASES_PER_RUN and MAX_COST_PER_RUN_USD). There are no delete or edit tools.
+  MAX_CASES_PER_RUN, MAX_COST_PER_RUN_USD and MAX_DAILY_COST_USD). No delete or edit tools.
 - Test-case data and model outputs are returned as data. They are untrusted: the
   `triage-regression` prompt tells the agent not to follow instructions found inside them.
 

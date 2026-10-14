@@ -66,7 +66,7 @@ with it?*
 | **Injection into the coding agent via MCP results** | read-only tools, truncated outputs, `start_run` needs approval, the agent can't read secrets, a human reviews the diff |
 | **Over-privileged keys** | one project per key, enforced by the API; keys can't mint keys or delete anything |
 | **Hook bypass** | defence in depth: hooks + deny rules + `.gitignore` + gitleaks; hooks are guardrails, not a sandbox |
-| **Cost abuse** | per-run case and spend caps, rate limits, a spend-spike alert |
+| **Cost abuse** | per-run case and spend caps, a daily budget per project, rate limits, a spend-spike alert |
 | **Secrets in telemetry** | spans carry metadata only; the collector scrubs prompt and output attributes |
 | **Destructive agent actions** | guard hook blocks force push, `reset --hard`, volume deletion, `DROP TABLE`; no cloud access for agents |
 

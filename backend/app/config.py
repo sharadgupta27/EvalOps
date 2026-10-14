@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = 1.0
     max_cases_per_run: int = 200
     max_cost_per_run_usd: float = 2.0
+    # Per project, per UTC day. Stops a looping agent or leaked key from queuing run after run.
+    max_daily_cost_usd: float = 20.0
     max_upload_bytes: int = 2 * 1024 * 1024
 
     # Demo account created by `python -m app.seed`. Public demo only; never a real account.

@@ -50,7 +50,7 @@ Classic software solved this with unit tests and CI. **EvalOps brings the same d
 *As Priya, I can run a prompt version against a dataset and watch progress.*
 - AC1: `POST /projects/{id}/runs` returns immediately with status `queued`. A background worker executes it.
 - AC2: `GET /runs/{id}` shows status, progress (done/total) and, when finished, a summary: pass rate, mean score per evaluator, p50/p95 latency, tokens, cost.
-- AC3: Runs larger than `MAX_CASES_PER_RUN` are rejected (422). A run stops and is marked failed if it exceeds `MAX_COST_PER_RUN_USD`.
+- AC3: Runs larger than `MAX_CASES_PER_RUN` are rejected (422). A run stops and is marked failed if it exceeds `MAX_COST_PER_RUN_USD`. When a project's spend since midnight UTC reaches `MAX_DAILY_COST_USD`, new runs are rejected (422) and queued runs fail without calling the model.
 - AC4: Errors on individual cases are recorded per case and do not crash the run.
 
 ### US-7 Compare
@@ -77,7 +77,7 @@ See [plan.md §1](plan.md#expected-behavior-happy-path). The Playwright E2E test
 
 | Area | Requirement |
 |---|---|
-| Cost | Tests and the public demo use `FakeProvider` (no paid API). Per-run case and spend caps. |
+| Cost | Tests and the public demo use `FakeProvider` (no paid API). Per-run case and spend caps; daily budget per project. |
 | Security | Hashed passwords (bcrypt) and API keys (SHA-256), JWT expiry, CORS allowlist, upload limit, untrusted data delimited in judge prompts. |
 | Performance | Unit test suite < 30 s. A 30-case FakeProvider run finishes in < 5 s. |
 | Portability | `docker compose up` gives a working system on Windows, macOS and Linux. |

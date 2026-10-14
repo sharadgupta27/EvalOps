@@ -104,6 +104,12 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 - **Accepted (author to confirm):** JWT in localStorage, no per-account lockout, Actions
   pinned by tag, Tailwind 3 dev-only DoS advisories.
 
+### 2026-10-14 · Follow-ups after launch
+- **Daily budget (T7):** `MAX_DAILY_COST_USD` per project per UTC day, checked when a run is
+  queued (422), when the worker claims it (fails without calling the model) and after each
+  case. Closes the "no daily budget" residual risk. Test:
+  `test_daily_budget_blocks_new_runs_and_stops_queued_ones`.
+
 ## Prompts that worked well
 
 - "Read plan.md and CLAUDE.md; implement one phase at a time, run the tests after each slice,

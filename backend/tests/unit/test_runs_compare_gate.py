@@ -82,6 +82,27 @@ async def test_cost_limit_stops_run(api: Api) -> None:
     assert run["progress"]["done"] < run["progress"]["total"]
 
 
+async def test_daily_budget_blocks_new_runs_and_stops_queued_ones(api: Api) -> None:
+    ids = await setup_project(api)
+    pid = ids["project_id"]
+    api.app.state.settings.worker_concurrency = 1
+    v1 = await api.version(pid, "v1", SUPPORT_TEMPLATE_V1)
+    body = {"prompt_version_id": v1, "dataset_id": ids["dataset_id"]}
+    first = await api.ok("POST", f"/projects/{pid}/runs", 202, json=body)
+    second = await api.ok("POST", f"/projects/{pid}/runs", 202, json=body)
+    # Budget shrinks after both were queued: the first spends it, the second never starts.
+    api.app.state.settings.max_daily_cost_usd = 0.0000001
+    await api.drain()
+    a = await api.ok("GET", f"/runs/{first['id']}")
+    b = await api.ok("GET", f"/runs/{second['id']}")
+    assert a["status"] == "failed" and "during the run" in a["error"]
+    assert b["status"] == "failed" and "before the run started" in b["error"]
+    assert b["cost_usd"] == 0
+
+    r = await api.ok("POST", f"/projects/{pid}/runs", 422, json=body)
+    assert "MAX_DAILY_COST_USD" in r["detail"]
+
+
 async def test_case_errors_are_recorded_not_fatal(api: Api) -> None:
     ids = await setup_project(api)
     pid = ids["project_id"]

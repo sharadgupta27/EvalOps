@@ -28,6 +28,7 @@ after CI passes on `main`.
    JWT_SECRET=<python -c "import secrets;print(secrets.token_urlsafe(48))">
    LLM_PROVIDER=fake            # public demo; set anthropic + ANTHROPIC_API_KEY for real runs
    MAX_COST_PER_RUN_USD=0.50
+   MAX_DAILY_COST_USD=5.0        # per project per UTC day
    RATE_LIMIT_PER_MINUTE=60
    DEMO_PASSWORD=<public demo password>
    ```

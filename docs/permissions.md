@@ -13,7 +13,7 @@ enforcement listed next to it.
 | Create prompt versions | ✅ | only via `POST /gate` (new label, immutable) | `RunService.start_gate` |
 | Datasets, cases, evaluators: read | ✅ | ✅ | |
 | Datasets, cases, evaluators: write | ✅ | ❌ 403 | `require_user` |
-| Start runs | ✅ (`triggered_by=ui`) | ✅ (`agent`, or `ci` via gate); bounded by case and cost caps | `queue_run` |
+| Start runs | ✅ (`triggered_by=ui`) | ✅ (`agent`, or `ci` via gate); bounded by case, per-run cost and daily budget caps | `queue_run` |
 | Compare, results, summaries | ✅ | ✅ | |
 | Gate policy: read / write | ✅ / ✅ | ✅ / ❌ | `put_policy` |
 | `POST /gate`, `GET /gate/{id}` | ❌ (API key only) | ✅ | `get_api_key_principal` |

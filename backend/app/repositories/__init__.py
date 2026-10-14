@@ -210,6 +210,14 @@ class Repo:
             oldest = oldest.replace(tzinfo=UTC)
         return (datetime.now(UTC) - oldest).total_seconds()
 
+    async def project_spend_today(self, project_id: int) -> float:
+        """USD spent by runs created since midnight UTC (the MAX_DAILY_COST_USD window)."""
+        midnight = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        q = select(func.coalesce(func.sum(EvalRun.cost_usd), 0.0)).where(
+            EvalRun.project_id == project_id, EvalRun.created_at >= midnight
+        )
+        return float(await self.s.scalar(q) or 0.0)
+
     async def count_runs_by_status(self) -> dict[str, int]:
         q = select(EvalRun.status, func.count(EvalRun.id)).group_by(EvalRun.status)
         return {str(status): int(n) for status, n in (await self.s.execute(q)).all()}

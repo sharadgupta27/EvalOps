@@ -105,6 +105,12 @@ class RunService(Service):
             )
         if not await self.repo.evaluators(project_id):
             raise Invalid("project has no evaluators; add at least one before running")
+        spent = await self.repo.project_spend_today(project_id)
+        if spent >= self.settings.max_daily_cost_usd:
+            raise Invalid(
+                f"daily budget reached: ${spent:.2f} spent today; "
+                f"MAX_DAILY_COST_USD is ${self.settings.max_daily_cost_usd:.2f}"
+            )
         return await self.repo.add(
             EvalRunRow(
                 project_id=project_id,

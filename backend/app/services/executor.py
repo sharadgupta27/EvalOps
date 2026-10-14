@@ -137,6 +137,21 @@ async def _execute(
         assert version is not None
         cases = list(await repo.cases(run.dataset_id))
         evaluator_rows = list(await repo.evaluators(run.project_id))
+        # Runs queued before the budget ran out must not spend past it either.
+        budget_left = settings.max_daily_cost_usd - (
+            await repo.project_spend_today(run.project_id) - run.cost_usd
+        )
+        if budget_left <= 0:
+            await repo.update_run(
+                run_id,
+                status=RunStatus.failed,
+                error="daily budget reached before the run started: MAX_DAILY_COST_USD "
+                f"${settings.max_daily_cost_usd:.2f}",
+                finished_at=datetime.now(UTC),
+            )
+            await s.commit()
+            RUNS_FINISHED.labels("failed").inc()
+            return
         await repo.delete_results(run_id)  # makes a re-claimed run idempotent
         await repo.update_run(run_id, progress_total=len(cases), progress_done=0)
         await s.commit()
@@ -189,6 +204,12 @@ async def _execute(
                 aborted = (
                     f"cost limit exceeded: ${spent:.4f} > MAX_COST_PER_RUN_USD "
                     f"${settings.max_cost_per_run_usd:.2f}"
+                )
+                break
+            if spent > budget_left:
+                aborted = (
+                    f"daily budget exceeded during the run: MAX_DAILY_COST_USD "
+                    f"${settings.max_daily_cost_usd:.2f}"
                 )
                 break
         if aborted:
