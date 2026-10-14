@@ -1,0 +1,96 @@
+name: Deploy
+
+# Runs only after CI succeeded on main: build images, push to GHCR, roll out to EC2.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  images:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - id: meta
+        run: |
+          echo "tag=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/evalops-backend:${{ steps.meta.outputs.tag }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/evalops-backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/evalops-frontend:${{ steps.meta.outputs.tag }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/evalops-frontend:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+      - name: Scan the backend image (Trivy)
+        run: >
+          docker run --rm aquasec/trivy:0.57.1 image --severity CRITICAL --exit-code 1 --ignore-unfixed
+          ghcr.io/${{ steps.meta.outputs.owner }}/evalops-backend:${{ steps.meta.outputs.tag }}
+
+  deploy:
+    needs: images
+    # Opt-in: set the repository variable DEPLOY_ENABLED=true once the EC2 secrets exist.
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ vars.DOMAIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy compose files to the server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml,deploy/Caddyfile"
+          target: /opt/evalops
+      - name: Roll out (pull, migrate, restart)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd /opt/evalops
+            export IMAGE_TAG=${{ needs.images.outputs.tag }}
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --wait --remove-orphans
+            docker image prune -f
+      - name: Health check
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS "https://${{ vars.DOMAIN }}/healthz"; then exit 0; fi
+            sleep 6
+          done
+          echo "::error::health check failed" && exit 1

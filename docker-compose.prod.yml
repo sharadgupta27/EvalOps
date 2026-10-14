@@ -1,0 +1,76 @@
+# Production on a single EC2 host. Images come from GHCR (built by .github/workflows/deploy.yml).
+# Secrets live in /opt/evalops/.env on the server, never in git. See docs/deployment.md.
+name: evalops
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+x-backend: &backend
+  image: ghcr.io/${IMAGE_OWNER:?set IMAGE_OWNER}/evalops-backend:${IMAGE_TAG:-latest}
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    ENVIRONMENT: prod
+    DATABASE_URL: postgresql+psycopg://evalops:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/evalops
+    CORS_ORIGINS: '["https://${DOMAIN:?set DOMAIN}"]'
+  logging: *logging
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evalops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: evalops
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evalops -d evalops"]
+      interval: 5s
+      retries: 20
+    logging: *logging
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9101/metrics', timeout=2)"]
+      interval: 15s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  frontend:
+    image: ghcr.io/${IMAGE_OWNER:?set IMAGE_OWNER}/evalops-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    logging: *logging
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [frontend]
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
