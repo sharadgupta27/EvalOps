@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "evalops": {
+      "command": "uv",
+      "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}/mcp-server", "--quiet", "python", "${CLAUDE_PLUGIN_ROOT}/mcp-server/server.py"],
+      "env": {
+        "EVALOPS_URL": "${EVALOPS_URL:-http://localhost:5173}",
+        "EVALOPS_API_KEY": "${EVALOPS_API_KEY}"
+      }
+    }
+  }
+}

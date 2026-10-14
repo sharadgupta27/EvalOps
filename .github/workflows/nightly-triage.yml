@@ -1,0 +1,29 @@
+name: Nightly regression triage
+
+# Runs the custom agent (custom-agent/agent.py): re-evaluate the newest prompt version,
+# compare it with its previous run and open a GitHub issue with a triage summary on regression.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    if: vars.EVALOPS_URL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Run triage agent
+        env:
+          EVALOPS_URL: ${{ vars.EVALOPS_URL }}
+          EVALOPS_API_KEY: ${{ secrets.EVALOPS_API_KEY }}
+          EVALOPS_DATASET_ID: ${{ vars.EVALOPS_DATASET_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: uv run --project custom-agent python custom-agent/agent.py --open-issue

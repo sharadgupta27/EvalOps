@@ -1,0 +1,10 @@
+{
+  "name": "evalops-agent-pack",
+  "version": "1.0.0",
+  "description": "Skills, subagents, guardrail hooks and an MCP server for teams that test LLM prompts with EvalOps.",
+  "author": { "name": "EvalOps maintainers" },
+  "license": "MIT",
+  "keywords": ["evals", "llm", "regression-testing", "mcp", "guardrails"],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json"
+}

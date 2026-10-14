@@ -1,0 +1,117 @@
+# AI-assisted development workflow
+
+How AI tools were used to build EvalOps: what was delegated, which context the agents had,
+what the human reviewed, and how every step was verified. Graded as rubric criterion 2.
+
+## Tools and context
+
+| Tool | Used for |
+|---|---|
+| **Claude Code** (CLI + VS Code extension, Claude Opus 5.5) | primary coding agent: planning, implementation, tests, docs, scans |
+| Built-in skills | `claude-api` (current Anthropic SDK usage, model ids, pricing) before writing `app/llm/` |
+| Project agent extensions (this repo) | skills, subagents, hooks and MCP server, used from Phase 8 on |
+
+**Context files the agent worked from:** `plan.md` (roadmap, phase checklist), `CLAUDE.md` →
+`AGENTS.md` (rules: contract first, layering, never call a real LLM in tests, ask before
+deps/schema/CI), `product-spec.md` (acceptance criteria), `openapi.yaml` (contract),
+`docs/rubric.md` and `docs/module5-requirements.md` (grading).
+
+## Working pattern
+
+1. **Spec → plan → slice.** The human wrote `plan.md` and `CLAUDE.md`. The agent turned them
+   into `product-spec.md` (user stories with testable acceptance criteria) and
+   `docs/backlog.md` (24 vertical slices).
+2. **Contract first.** `openapi.yaml` was written before any backend code; the TS client
+   was generated from it; a drift test compares it with FastAPI's schema on every run.
+3. **Small loops, tests inside the loop.** Each slice: implement → run ruff/mypy/tests → fix →
+   next. The agent never declared a slice done without a green run.
+4. **Verification beyond unit tests.** Postgres integration tests (testcontainers), the full
+   Docker stack, a Playwright E2E of the happy path, the gate client against the live stack,
+   the MCP server over real stdio, real security scanners, and an outage drill.
+5. **Human review.** The author reviews every diff before commit; decisions on security
+   findings are recorded in `security/pr-audit.md`.
+
+## Log
+
+Each entry: goal · prompt or delegation · what the AI produced · what was reviewed or changed · verification.
+
+### 2026-10-14 · Phases 0–1: spec, agent context, contract, frontend
+- **Prompt:** "Implement the EvalOps project using plan.md and follow CLAUDE.md … develop an
+  agent extension pack … generate a step-by-step guide for Substack."
+- **Produced:** `product-spec.md`, `AGENTS.md` (CLAUDE.md now imports it), backlog,
+  `openapi.yaml` (22 paths, 35 operations, 41 schemas), React app with generated client and query hooks.
+- **Reviewed / changed:** after reading the Claude API reference the agent changed the contract:
+  `temperature` became nullable (default null) because current Claude models reject sampling
+  parameters. Spectral `operation-description` was disabled with a justification (every
+  operation has a summary).
+- **Verified:** Spectral 0 errors; `tsc` strict, ESLint, 26 Vitest tests; production build.
+
+### 2026-10-14 · Phase 2: backend core
+- **Produced:** FastAPI factory, settings, async SQLAlchemy models, Alembic migration 0001,
+  JWT auth, hashed project API keys, CRUD, CSV/JSONL import with per-row errors, contract test.
+- **Issues found by running things:** method named `list` shadowed the builtin inside class
+  annotations (renamed); a test helper treated `[]` as "use defaults" (fixed); Windows needed
+  a selector event loop for async psycopg (`run_async` helper + pytest loop factory);
+  bcrypt at 12 rounds made the unit suite 38 s, over the 30 s budget, so rounds became a setting
+  (4 in tests; prod refuses < 12).
+- **Verified:** contract test green; migration upgrade/downgrade on SQLite and Postgres.
+
+### 2026-10-14 · Phase 3: eval engine and worker
+- **Delegation:** the agent loaded the `claude-api` skill before writing the provider to get
+  current model ids, pricing, structured outputs and error classes rather than recalling them.
+- **Produced:** `LLMProvider`, `AnthropicProvider` (SDK retries/timeouts, structured JSON for
+  the judge, refusal → error), deterministic `FakeProvider`, 5 evaluators in a registry,
+  worker with `SKIP LOCKED`, bounded concurrency, spend cap, summaries; calibration set and script.
+- **Decision (human-approved design):** no server-side model fallback for eval runs, because an
+  eval must measure the configured model.
+- **Honesty note:** the calibration labels were AI-drafted; agreement with FakeProvider (100%)
+  is a pipeline check only. Recorded in `calibration/README.md`.
+- **Verified:** 77 unit tests; 3 Postgres integration tests including concurrent claimers.
+
+### 2026-10-14 · Phases 4–6: compare, gate, containers, CI/CD
+- **Produced:** compare service and UI, gate policy and `/gate`, `scripts/evalops_gate.py`,
+  Dockerfiles, dev/prod compose, Caddy, seed script, `ci.yml`, `deploy.yml`, `eval-gate.yml`.
+- **Bugs found in integration:** nginx cached the API container's IP and returned 502 after
+  the API was recreated (fixed with Docker DNS re-resolution); the gate client crashed on
+  Windows printing emoji (UTF-8 stdout).
+- **Verified:** `docker compose up` → seed → login → runs → compare through nginx; gate
+  client: good prompt exit 0, terse prompt exit 1 with 30 regressions; Playwright E2E green.
+
+### 2026-10-14 · Phase 7: observability
+- **Produced:** metrics, OTel traces (`run.execute`, `case.evaluate`, `llm.complete` with
+  model/token/cost attributes), collector + Tempo + Prometheus + Grafana, dashboard, alerts.
+- **Finding during the drill design:** queue-age metric disappeared with the worker, so the
+  queue alert could never fire when the worker was dead. Fixed (API exports it too) and proven
+  by the drill (`security/ops-drill/`).
+- **Known gap:** API and worker traces are separate (linked by `run_id` attribute, not context propagation).
+
+### 2026-10-14 · Phase 8: agent extension pack
+- **Produced:** 3 skills, 3 subagents, MCP server (7 tools, resource, prompt), 3 hooks + audit
+  log + contract-approval flow, plugin + marketplace, custom triage agent, permissions doc.
+- **API drift caught by running code:** `mcp` 2.x renamed `FastMCP` to `MCPServer`; the
+  agent read the installed SDK instead of guessing.
+- **Verified:** 7 MCP tests + stdio smoke test against the live stack; 9 hook tests; `claude
+  plugin validate` passes for the plugin and marketplace; triage agent run on the live stack.
+- **Not verified here:** the Claude path of the triage agent (no API key in this environment).
+
+### 2026-10-14 · Phase 9: security
+- **Produced:** real scan outputs, AI audit with decisions, threat model, data policy.
+- **Fixed from findings:** rate-limit bypass via rotating fake API keys; upload parsed before
+  size check; frontend image CVEs (41 → 0); react-router CVEs (v7); Vitest critical (v5);
+  Semgrep blind spot (Python 3.12 generics); Prism removed from dev deps.
+- **Accepted (author to confirm):** JWT in localStorage, no per-account lockout, Actions
+  pinned by tag, Tailwind 3 dev-only DoS advisories.
+
+## Prompts that worked well
+
+- "Read plan.md and CLAUDE.md; implement one phase at a time, run the tests after each slice,
+  and log decisions in docs/ai-workflow.md."
+- "Before writing the Anthropic provider, load the claude-api skill and use only documented SDK calls."
+- "Run the real scanners in Docker, save raw outputs under security/scans, fix what is
+  fixable and document what is accepted, with a reason."
+
+## What the human must still do
+
+Review the diffs and the *Author to confirm* rows in `security/pr-audit.md`; review the
+calibration labels; run the real-model calibration once; create the AWS resources and enable
+`DEPLOY_ENABLED`; record the demo video.

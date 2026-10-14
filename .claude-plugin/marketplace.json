@@ -1,0 +1,11 @@
+{
+  "name": "evalops",
+  "owner": { "name": "EvalOps maintainers" },
+  "plugins": [
+    {
+      "name": "evalops-agent-pack",
+      "source": "./plugins/evalops-agent-pack",
+      "description": "EvalOps skills, subagents, guardrail hooks and MCP server."
+    }
+  ]
+}

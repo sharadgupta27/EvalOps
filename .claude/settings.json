@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(uv run pytest:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run gen:api:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "mcp__evalops__list_projects",
+      "mcp__evalops__list_prompt_versions",
+      "mcp__evalops__list_runs",
+      "mcp__evalops__get_run_summary",
+      "mcp__evalops__compare_runs",
+      "mcp__evalops__get_regressions"
+    ],
+    "ask": [
+      "mcp__evalops__start_run",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(docker compose:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./backend/.env*)",
+      "Bash(git push --force:*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": ["evalops"],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          { "type": "command", "command": "uv run --no-project --quiet python \"$CLAUDE_PROJECT_DIR/agent-hooks/guard.py\"", "timeout": 15 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "uv run --no-project --quiet python \"$CLAUDE_PROJECT_DIR/agent-hooks/format_on_save.py\"", "timeout": 60 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run --no-project --quiet python \"$CLAUDE_PROJECT_DIR/agent-hooks/stop_tests.py\"", "timeout": 600 }
+        ]
+      }
+    ]
+  }
+}

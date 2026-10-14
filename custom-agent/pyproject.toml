@@ -1,0 +1,9 @@
+[project]
+name = "evalops-triage-agent"
+version = "1.0.0"
+description = "Scheduled regression-triage agent for EvalOps"
+requires-python = ">=3.12"
+dependencies = ["anthropic>=1.0", "httpx>=0.27"]
+
+[tool.uv]
+package = false
