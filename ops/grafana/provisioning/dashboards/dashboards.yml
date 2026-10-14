@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: evalops
+    folder: EvalOps
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

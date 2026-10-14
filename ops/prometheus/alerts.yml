@@ -1,0 +1,38 @@
+groups:
+  - name: evalops
+    rules:
+      # Actionable: runs are queued but nobody is processing them. Runbook: docs/runbook.md#queue-stuck
+      - alert: EvalQueueStuck
+        expr: max(evalops_queue_oldest_age_seconds) > 300
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: "Oldest queued eval run is {{ $value | humanizeDuration }} old"
+          description: "The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs."
+          runbook_url: "docs/runbook.md#queue-stuck"
+
+      - alert: WorkerDown
+        expr: up{job="evalops-worker"} == 0
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: "EvalOps worker is not scrapeable"
+          runbook_url: "docs/runbook.md#worker-down"
+
+      - alert: LLMErrorRateHigh
+        expr: |
+          sum(rate(evalops_llm_errors_total[10m]))
+            / clamp_min(sum(rate(evalops_llm_latency_seconds_count[10m])) + sum(rate(evalops_llm_errors_total[10m])), 1e-9)
+          > 0.2
+        for: 10m
+        labels: { severity: ticket }
+        annotations:
+          summary: "More than 20% of LLM calls are failing"
+          runbook_url: "docs/runbook.md#llm-errors"
+
+      - alert: LLMSpendSpike
+        expr: sum(increase(evalops_llm_cost_usd_total[1h])) > 20
+        labels: { severity: ticket }
+        annotations:
+          summary: "LLM spend over $20 in the last hour"
+          runbook_url: "docs/runbook.md#spend-spike"

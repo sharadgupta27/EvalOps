@@ -1,0 +1,41 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch: {}
+  # Prompts and outputs never belong in traces: drop any attribute that could carry them.
+  attributes/scrub:
+    actions:
+      - key: evalops.prompt
+        action: delete
+      - key: evalops.output
+        action: delete
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+connectors:
+  # Derives RED metrics (rate, errors, duration) per span name, e.g. llm.complete.
+  spanmetrics:
+    dimensions:
+      - name: gen_ai.request.model
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [attributes/scrub, batch]
+      exporters: [otlp/tempo, spanmetrics]
+    metrics:
+      receivers: [spanmetrics]
+      exporters: [prometheus]
