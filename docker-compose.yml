@@ -1,0 +1,66 @@
+# Full local stack: `docker compose up --build`, then open http://localhost:5173
+# Seed demo data: `docker compose run --rm api python -m app.seed`
+name: evalops
+
+x-backend: &backend
+  build: ./backend
+  image: evalops-backend:local
+  environment:
+    ENVIRONMENT: dev
+    DATABASE_URL: postgresql+psycopg://evalops:evalops@db:5432/evalops
+    JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-0123456789abcdef}
+    CORS_ORIGINS: '["http://localhost:5173"]'
+    LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    DEFAULT_MODEL: ${DEFAULT_MODEL:-claude-opus-5-5}
+    JUDGE_MODEL: ${JUDGE_MODEL:-claude-opus-5-5}
+    MAX_CASES_PER_RUN: ${MAX_CASES_PER_RUN:-200}
+    MAX_COST_PER_RUN_USD: ${MAX_COST_PER_RUN_USD:-2.0}
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: evalops
+      POSTGRES_PASSWORD: evalops  # local development only
+      POSTGRES_DB: evalops
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evalops -d evalops"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    <<: *backend
+    ports: ["8000:8000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9101/metrics', timeout=2)"]
+      interval: 15s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  frontend:
+    build: ./frontend
+    image: evalops-frontend:local
+    ports: ["5173:8080"]
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
