@@ -1,0 +1,6 @@
+extends: ["spectral:oas"]
+rules:
+  # Every operation has a summary; long descriptions only where behaviour needs explaining.
+  operation-description: off
+  operation-tag-defined: error
+  operation-operationId: error

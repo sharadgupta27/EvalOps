@@ -1,0 +1,1159 @@
+openapi: 3.1.0
+info:
+  title: EvalOps API
+  version: 1.0.0
+  description: |
+    LLM regression-testing platform. Version prompts, maintain golden datasets,
+    run evaluations, compare runs and gate CI on quality.
+
+    Authentication:
+    - Humans: `Authorization: Bearer <JWT>` from `/auth/login`.
+    - Machines (CI, MCP, agents): `X-API-Key: <project key>`. A key is scoped to one
+      project and may only read data, start runs and call the gate.
+  contact:
+    name: EvalOps maintainers
+    url: https://github.com/your-github-user/evalops
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /api/v1
+tags:
+  - name: auth
+  - name: projects
+  - name: prompt-versions
+  - name: datasets
+  - name: evaluators
+  - name: runs
+  - name: gate
+  - name: api-keys
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [auth]
+      operationId: register
+      summary: Create a user account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Exchange email and password for a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      summary: Current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /projects:
+    get:
+      tags: [projects]
+      operationId: listProjects
+      summary: List projects visible to the caller
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Project' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [projects]
+      operationId: createProject
+      summary: Create a project
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /projects/{project_id}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [projects]
+      operationId: getProject
+      summary: Get a project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [projects]
+      operationId: updateProject
+      summary: Rename or re-describe a project
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [projects]
+      operationId: deleteProject
+      summary: Delete a project and everything in it
+      security:
+        - bearerAuth: []
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{project_id}/prompt-versions:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [prompt-versions]
+      operationId: listPromptVersions
+      summary: List prompt versions (newest first)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PromptVersion' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [prompt-versions]
+      operationId: createPromptVersion
+      summary: Create an immutable prompt version
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PromptVersionCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PromptVersion' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /projects/{project_id}/datasets:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [datasets]
+      operationId: listDatasets
+      summary: List datasets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Dataset' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [datasets]
+      operationId: createDataset
+      summary: Create an empty dataset
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DatasetCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dataset' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /datasets/{dataset_id}:
+    parameters:
+      - $ref: '#/components/parameters/DatasetId'
+    get:
+      tags: [datasets]
+      operationId: getDataset
+      summary: Get a dataset
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dataset' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [datasets]
+      operationId: deleteDataset
+      summary: Delete a dataset and its cases
+      security:
+        - bearerAuth: []
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /datasets/{dataset_id}/import:
+    parameters:
+      - $ref: '#/components/parameters/DatasetId'
+    post:
+      tags: [datasets]
+      operationId: importCases
+      summary: Import test cases from a CSV or JSONL file (max 2 MB)
+      description: |
+        CSV: an `expected_output` column, an optional `tags` column (`;`-separated),
+        every other column becomes an input variable.
+        JSONL: one object per line with `inputs` (object), optional `expected_output` and `tags`.
+        Valid rows are imported; invalid rows are reported and skipped.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Import report
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportResult' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /datasets/{dataset_id}/cases:
+    parameters:
+      - $ref: '#/components/parameters/DatasetId'
+    get:
+      tags: [datasets]
+      operationId: listCases
+      summary: List test cases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TestCase' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [datasets]
+      operationId: createCase
+      summary: Add a test case
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TestCaseCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TestCase' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /datasets/{dataset_id}/cases/{case_id}:
+    parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      - $ref: '#/components/parameters/CaseId'
+    patch:
+      tags: [datasets]
+      operationId: updateCase
+      summary: Edit a test case
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TestCaseUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TestCase' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [datasets]
+      operationId: deleteCase
+      summary: Delete a test case
+      security:
+        - bearerAuth: []
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{project_id}/evaluators:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [evaluators]
+      operationId: listEvaluators
+      summary: List evaluators
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Evaluator' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [evaluators]
+      operationId: createEvaluator
+      summary: Attach an evaluator
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EvaluatorCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evaluator' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /projects/{project_id}/evaluators/{evaluator_id}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/EvaluatorId'
+    patch:
+      tags: [evaluators]
+      operationId: updateEvaluator
+      summary: Change an evaluator's name, config or weight
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EvaluatorUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evaluator' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [evaluators]
+      operationId: deleteEvaluator
+      summary: Remove an evaluator
+      security:
+        - bearerAuth: []
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{project_id}/runs:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [runs]
+      operationId: listRuns
+      summary: List runs (newest first)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/EvalRun' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [runs]
+      operationId: createRun
+      summary: Queue an evaluation run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunCreate' }
+      responses:
+        '202':
+          description: Queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvalRun' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /runs/compare:
+    get:
+      tags: [runs]
+      operationId: compareRuns
+      summary: Per-case regression diff between two runs on the same dataset
+      parameters:
+        - name: base
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: head
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompareResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /runs/{run_id}:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [runs]
+      operationId: getRun
+      summary: Run status, progress and summary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvalRun' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /runs/{run_id}/results:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [runs]
+      operationId: getRunResults
+      summary: Per-case results
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/EvalResult' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{project_id}/gate-policy:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [gate]
+      operationId: getGatePolicy
+      summary: Current gate thresholds (defaults if never set)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GatePolicy' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [gate]
+      operationId: putGatePolicy
+      summary: Set gate thresholds
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GatePolicy' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GatePolicy' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /gate:
+    post:
+      tags: [gate]
+      operationId: startGate
+      summary: CI entry point. Queue a head run and pick a baseline to compare against.
+      description: |
+        Authenticated with a project API key. If `template` is given, a new prompt version
+        `head_label` is created (or reused if an identical one exists). The baseline is
+        `baseline_run_id`, else the latest succeeded run of `baseline_label`, else the
+        latest succeeded run on the dataset. Poll `GET /gate/{run_id}` for the verdict.
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GateRequest' }
+      responses:
+        '202':
+          description: Queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GateResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /gate/{run_id}:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [gate]
+      operationId: getGateResult
+      summary: Gate verdict for a run (`pending` until the run finishes)
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GateResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{project_id}/api-keys:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [api-keys]
+      operationId: listApiKeys
+      summary: List API keys (secrets are never returned)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ApiKey' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [api-keys]
+      operationId: createApiKey
+      summary: Create an API key. The secret is returned once.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApiKeyCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyCreated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /projects/{project_id}/api-keys/{key_id}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - name: key_id
+        in: path
+        required: true
+        schema: { type: integer }
+    delete:
+      tags: [api-keys]
+      operationId: revokeApiKey
+      summary: Revoke an API key
+      security:
+        - bearerAuth: []
+      responses:
+        '204': { description: Revoked }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      schema: { type: integer }
+    DatasetId:
+      name: dataset_id
+      in: path
+      required: true
+      schema: { type: integer }
+    CaseId:
+      name: case_id
+      in: path
+      required: true
+      schema: { type: integer }
+    EvaluatorId:
+      name: evaluator_id
+      in: path
+      required: true
+      schema: { type: integer }
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema: { type: integer }
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Not found (or not visible to the caller)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflicts with existing state
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooLarge:
+      description: Payload too large
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationFailed:
+      description: Request is well-formed but semantically invalid
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          description: Human-readable message, or a list of field errors
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: object }
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 8, maxLength: 128 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: bearer }
+
+    User:
+      type: object
+      required: [id, email, created_at]
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        created_at: { type: string, format: date-time }
+
+    Project:
+      type: object
+      required: [id, name, description, created_at]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        created_at: { type: string, format: date-time }
+
+    ProjectCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000, default: '' }
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+
+    PromptParams:
+      type: object
+      properties:
+        temperature:
+          description: Sampling temperature. Leave null for models that reject sampling parameters (current Claude models).
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+          default: null
+        max_tokens: { type: integer, minimum: 1, maximum: 32000, default: 2048 }
+        system: { type: string, maxLength: 20000, default: '' }
+
+    PromptVersion:
+      type: object
+      required: [id, project_id, label, template, model, params, variables, created_at]
+      properties:
+        id: { type: integer }
+        project_id: { type: integer }
+        label: { type: string }
+        template: { type: string }
+        model: { type: string }
+        params: { $ref: '#/components/schemas/PromptParams' }
+        variables:
+          description: Variable names found in the template (`{{name}}`)
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }
+
+    PromptVersionCreate:
+      type: object
+      required: [label, template]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9._-]+$' }
+        template: { type: string, minLength: 1, maxLength: 50000 }
+        model:
+          description: Defaults to the server's DEFAULT_MODEL
+          type: string
+          maxLength: 100
+        params: { $ref: '#/components/schemas/PromptParams' }
+
+    Dataset:
+      type: object
+      required: [id, project_id, name, case_count, created_at]
+      properties:
+        id: { type: integer }
+        project_id: { type: integer }
+        name: { type: string }
+        case_count: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    DatasetCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+
+    TestCase:
+      type: object
+      required: [id, dataset_id, inputs, expected_output, tags, created_at]
+      properties:
+        id: { type: integer }
+        dataset_id: { type: integer }
+        inputs:
+          type: object
+          additionalProperties: true
+        expected_output: { type: [string, 'null'] }
+        tags:
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }
+
+    TestCaseCreate:
+      type: object
+      required: [inputs]
+      properties:
+        inputs:
+          type: object
+          additionalProperties: true
+        expected_output: { type: [string, 'null'], maxLength: 20000 }
+        tags:
+          type: array
+          items: { type: string }
+          default: []
+
+    TestCaseUpdate:
+      type: object
+      properties:
+        inputs:
+          type: object
+          additionalProperties: true
+        expected_output: { type: [string, 'null'], maxLength: 20000 }
+        tags:
+          type: array
+          items: { type: string }
+
+    ImportRowError:
+      type: object
+      required: [row, message]
+      properties:
+        row: { type: integer, description: 1-based data row number }
+        message: { type: string }
+
+    ImportResult:
+      type: object
+      required: [imported, errors]
+      properties:
+        imported: { type: integer }
+        errors:
+          type: array
+          items: { $ref: '#/components/schemas/ImportRowError' }
+
+    EvaluatorType:
+      type: string
+      enum: [exact_match, contains, regex, json_schema, llm_judge]
+
+    Evaluator:
+      type: object
+      required: [id, project_id, type, name, config, weight]
+      properties:
+        id: { type: integer }
+        project_id: { type: integer }
+        type: { $ref: '#/components/schemas/EvaluatorType' }
+        name: { type: string }
+        config:
+          description: |
+            exact_match: {case_sensitive?: bool, strip?: bool}
+            contains: {value?: string, case_sensitive?: bool} (defaults to the case's expected_output)
+            regex: {pattern: string}
+            json_schema: {schema: object}
+            llm_judge: {rubric: string, threshold?: 1-5 (default 4)}
+          type: object
+          additionalProperties: true
+        weight: { type: number }
+
+    EvaluatorCreate:
+      type: object
+      required: [type, name]
+      properties:
+        type: { $ref: '#/components/schemas/EvaluatorType' }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        config:
+          type: object
+          additionalProperties: true
+          default: {}
+        weight: { type: number, exclusiveMinimum: 0, maximum: 100, default: 1 }
+
+    EvaluatorUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        config:
+          type: object
+          additionalProperties: true
+        weight: { type: number, exclusiveMinimum: 0, maximum: 100 }
+
+    RunStatus:
+      type: string
+      enum: [queued, running, succeeded, failed]
+
+    TriggeredBy:
+      type: string
+      enum: [ui, ci, agent]
+
+    RunCreate:
+      type: object
+      required: [prompt_version_id, dataset_id]
+      properties:
+        prompt_version_id: { type: integer }
+        dataset_id: { type: integer }
+        git_sha: { type: [string, 'null'], maxLength: 64 }
+
+    RunProgress:
+      type: object
+      required: [done, total]
+      properties:
+        done: { type: integer }
+        total: { type: integer }
+
+    RunSummary:
+      type: object
+      required: [total, passed, errored, pass_rate, mean_score, mean_scores, latency_p50_ms, latency_p95_ms, total_tokens, cost_usd]
+      properties:
+        total: { type: integer }
+        passed: { type: integer }
+        errored: { type: integer }
+        pass_rate: { type: number, description: 0..1 }
+        mean_score: { type: number, description: Weighted mean case score, 0..1 }
+        mean_scores:
+          description: Mean score per evaluator name, 0..1
+          type: object
+          additionalProperties: { type: number }
+        latency_p50_ms: { type: number }
+        latency_p95_ms: { type: number }
+        total_tokens: { type: integer }
+        cost_usd: { type: number }
+
+    EvalRun:
+      type: object
+      required: [id, project_id, prompt_version_id, prompt_label, dataset_id, status, triggered_by, git_sha, progress, summary, total_tokens, cost_usd, error, baseline_run_id, created_at, started_at, finished_at]
+      properties:
+        id: { type: integer }
+        project_id: { type: integer }
+        prompt_version_id: { type: integer }
+        prompt_label: { type: string }
+        dataset_id: { type: integer }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        triggered_by: { $ref: '#/components/schemas/TriggeredBy' }
+        git_sha: { type: [string, 'null'] }
+        progress: { $ref: '#/components/schemas/RunProgress' }
+        summary:
+          oneOf:
+            - $ref: '#/components/schemas/RunSummary'
+            - type: 'null'
+        total_tokens: { type: integer }
+        cost_usd: { type: number }
+        error: { type: [string, 'null'] }
+        baseline_run_id: { type: [integer, 'null'] }
+        created_at: { type: string, format: date-time }
+        started_at: { type: [string, 'null'], format: date-time }
+        finished_at: { type: [string, 'null'], format: date-time }
+
+    EvaluatorScore:
+      type: object
+      required: [evaluator, type, score, passed, reason]
+      properties:
+        evaluator: { type: string }
+        type: { $ref: '#/components/schemas/EvaluatorType' }
+        score: { type: number, description: 0..1 }
+        passed: { type: boolean }
+        reason: { type: string }
+
+    EvalResult:
+      type: object
+      required: [id, run_id, test_case_id, inputs, expected_output, output, scores, score, passed, latency_ms, tokens_in, tokens_out, cost_usd, error]
+      properties:
+        id: { type: integer }
+        run_id: { type: integer }
+        test_case_id: { type: integer }
+        inputs:
+          type: object
+          additionalProperties: true
+        expected_output: { type: [string, 'null'] }
+        output: { type: [string, 'null'] }
+        scores:
+          type: array
+          items: { $ref: '#/components/schemas/EvaluatorScore' }
+        score: { type: number, description: Weighted case score, 0..1 }
+        passed: { type: boolean }
+        latency_ms: { type: number }
+        tokens_in: { type: integer }
+        tokens_out: { type: integer }
+        cost_usd: { type: number }
+        error: { type: [string, 'null'] }
+
+    CompareBucket:
+      type: string
+      enum: [regressed, improved, unchanged, added, removed]
+
+    CompareCase:
+      type: object
+      required: [test_case_id, inputs, expected_output, base_output, head_output, base_passed, head_passed, base_score, head_score, delta, bucket]
+      properties:
+        test_case_id: { type: integer }
+        inputs:
+          type: object
+          additionalProperties: true
+        expected_output: { type: [string, 'null'] }
+        base_output: { type: [string, 'null'] }
+        head_output: { type: [string, 'null'] }
+        base_passed: { type: [boolean, 'null'] }
+        head_passed: { type: [boolean, 'null'] }
+        base_score: { type: [number, 'null'] }
+        head_score: { type: [number, 'null'] }
+        delta: { type: [number, 'null'] }
+        bucket: { $ref: '#/components/schemas/CompareBucket' }
+
+    CompareCounts:
+      type: object
+      required: [regressed, improved, unchanged, added, removed]
+      properties:
+        regressed: { type: integer }
+        improved: { type: integer }
+        unchanged: { type: integer }
+        added: { type: integer }
+        removed: { type: integer }
+
+    CompareResponse:
+      type: object
+      required: [base, head, counts, pass_rate_delta, cost_delta_pct, cases]
+      properties:
+        base: { $ref: '#/components/schemas/EvalRun' }
+        head: { $ref: '#/components/schemas/EvalRun' }
+        counts: { $ref: '#/components/schemas/CompareCounts' }
+        pass_rate_delta: { type: number }
+        cost_delta_pct: { type: [number, 'null'] }
+        cases:
+          type: array
+          items: { $ref: '#/components/schemas/CompareCase' }
+
+    GatePolicy:
+      type: object
+      required: [min_pass_rate, max_regressions, max_cost_increase_pct]
+      properties:
+        min_pass_rate: { type: number, minimum: 0, maximum: 1, default: 0.8 }
+        max_regressions: { type: integer, minimum: 0, default: 0 }
+        max_cost_increase_pct: { type: number, minimum: 0, default: 20 }
+
+    GateRequest:
+      type: object
+      required: [dataset_id, head_label]
+      properties:
+        dataset_id: { type: integer }
+        head_label: { type: string, minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9._-]+$' }
+        template:
+          description: When set, creates prompt version `head_label` from this template
+          type: [string, 'null']
+          maxLength: 50000
+        model: { type: [string, 'null'], maxLength: 100 }
+        params:
+          oneOf:
+            - $ref: '#/components/schemas/PromptParams'
+            - type: 'null'
+        baseline_label: { type: [string, 'null'] }
+        baseline_run_id: { type: [integer, 'null'] }
+        git_sha: { type: [string, 'null'], maxLength: 64 }
+
+    GateVerdict:
+      type: string
+      enum: [pending, pass, fail]
+
+    GateResult:
+      type: object
+      required: [run_id, baseline_run_id, verdict, reasons, pass_rate, regressions, cost_increase_pct, policy]
+      properties:
+        run_id: { type: integer }
+        baseline_run_id: { type: [integer, 'null'] }
+        verdict: { $ref: '#/components/schemas/GateVerdict' }
+        reasons:
+          type: array
+          items: { type: string }
+        pass_rate: { type: [number, 'null'] }
+        regressions: { type: [integer, 'null'] }
+        cost_increase_pct: { type: [number, 'null'] }
+        policy: { $ref: '#/components/schemas/GatePolicy' }
+
+    ApiKey:
+      type: object
+      required: [id, project_id, name, prefix, created_at, last_used_at, revoked_at]
+      properties:
+        id: { type: integer }
+        project_id: { type: integer }
+        name: { type: string }
+        prefix: { type: string, description: First characters of the key, for recognition }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: [string, 'null'], format: date-time }
+        revoked_at: { type: [string, 'null'], format: date-time }
+
+    ApiKeyCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+
+    ApiKeyCreated:
+      type: object
+      required: [id, project_id, name, prefix, created_at, last_used_at, revoked_at, key]
+      properties:
+        id: { type: integer }
+        project_id: { type: integer }
+        name: { type: string }
+        prefix: { type: string }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: [string, 'null'], format: date-time }
+        revoked_at: { type: [string, 'null'], format: date-time }
+        key: { type: string, description: The secret. Shown only in this response. }
