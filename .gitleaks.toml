@@ -1,0 +1,17 @@
+# gitleaks config: default rules plus allowlists for intentional, non-secret test values.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secrets"
+paths = [
+  '''frontend/package-lock\.json''',
+  '''e2e/package-lock\.json''',
+  '''backend/uv\.lock''',
+  '''security/scans/.*''',
+]
+regexes = [
+  '''dev-only-change-me-0123456789abcdef''',  # dev JWT default, rejected when ENVIRONMENT=prod
+  '''evalops-demo-2026''',                   # public demo account password
+  '''eo_test''',                             # MCP test fixture
+]

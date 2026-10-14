@@ -1,0 +1,5 @@
+
+evalops-frontend:local (alpine 3.21.3)
+======================================
+Total: 0 (HIGH: 0, CRITICAL: 0)
+

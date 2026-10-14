@@ -1,0 +1,39 @@
+METRICS: Using configs from the Registry (like --config=p/ci) reports pseudonymous rule metrics to semgrep.dev.
+To disable Registry rule metrics, use "--metrics=off".
+Using configs only from local files (like --config=xyz.yml) does not enable metrics.
+
+More information: https://semgrep.dev/docs/metrics
+
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 197 files tracked by git with 278 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>      36     176          Community     278                                                                
+  python          151      62                                                                                           
+  ts               74      31                                                                                           
+  yaml              2      15                                                                                           
+  js               68       4                                                                                           
+  dockerfile        7       2                                                                                           
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+Some files were skipped or only partially analyzed.
+  Scan was limited to files tracked by git.
+  Scan skipped: 21 files matching .semgrepignore patterns
+  For a full list of skipped files, run semgrep with the --verbose flag.
+
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+Ran 269 rules on 176 files: 0 findings.
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/

@@ -1,0 +1,9 @@
+node_modules/
+.venv/
+dist/
+coverage/
+playwright-report/
+test-results/
+plugins/evalops-agent-pack/
+security/scans/
+frontend/src/api/schema.d.ts
