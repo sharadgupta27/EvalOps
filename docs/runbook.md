@@ -1,7 +1,12 @@
 # Runbook
 
-Alerts are defined in [ops/prometheus/alerts.yml](../ops/prometheus/alerts.yml); the
-dashboard is *EvalOps overview* in Grafana. Commands assume the prod compose file
+Alerts are defined in [ops/prometheus/alerts.yml](../ops/prometheus/alerts.yml) and routed by
+[ops/alertmanager/alertmanager.yml](../ops/alertmanager/alertmanager.yml): `severity: page`
+goes to the `page` receiver (notify within 10 s, repeat hourly), everything else to `ticket`.
+While `WorkerDown` fires, `EvalQueueStuck` is inhibited (same cause, one notification).
+Locally both receivers post to the `alert-sink` container; swap in Slack, email or PagerDuty
+with the commented examples in that file. Silence a known issue at http://localhost:9093.
+The dashboard is *EvalOps overview* in Grafana. Commands assume the prod compose file
 (`C="docker compose -f docker-compose.prod.yml"`); in dev drop the `-f`.
 
 ## queue-stuck

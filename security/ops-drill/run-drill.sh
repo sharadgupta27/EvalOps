@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-# Operational drill: simulate a dead worker and record what the monitoring shows.
+# Operational drill: simulate a dead worker and record what the monitoring shows,
+# from Prometheus rule evaluation through Alertmanager routing to the delivered notification.
 # Requires: docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml up -d
 set -u
 OUT=security/ops-drill/drill-output.txt
 C="docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml"
 q() { curl -s "localhost:9090/api/v1/query" --data-urlencode "query=$1"; echo; }
 alerts() { curl -s localhost:9090/api/v1/alerts; echo; }
+# Alertmanager's view: which alerts are active and which are suppressed by inhibition.
+am() {
+  curl -s localhost:9093/api/v2/alerts | python -c "import sys,json
+for a in json.load(sys.stdin): print(' ', a['labels']['alertname'], a['status']['state'], 'inhibitedBy' if a['status']['inhibitedBy'] else '')"
+}
+delivered() { $C logs --no-log-prefix --since "$START" alert-sink; }
 {
-  echo "== $(date -u +%FT%TZ) drill start: stopping worker"
+  START=$(date -u +%FT%TZ)
+  echo "== $START drill start: stopping worker"
   $C stop worker
   TOKEN=$(curl -s -X POST localhost:5173/api/v1/auth/login -H 'Content-Type: application/json' \
     -d '{"email":"demo@evalops.dev","password":"evalops-demo-2026"}' | python -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
@@ -18,14 +26,24 @@ alerts() { curl -s localhost:9090/api/v1/alerts; echo; }
     sleep 60
     echo "== t+${minute}m"
     echo "-- up{job=evalops-worker}"; q 'up{job="evalops-worker"}'
-    echo "-- queue age (api-side gauge is only updated by the worker, so use the DB via API below)"
+    echo "-- queue age (exported by the API, so it survives the worker)"; q 'max(evalops_queue_oldest_age_seconds)'
     curl -s localhost:5173/api/v1/projects/1/runs -H "Authorization: Bearer $TOKEN" | python -c "import sys,json;r=json.load(sys.stdin)[0];print('latest run', r['id'], r['status'], 'created', r['created_at'])"
-    echo "-- alerts"; alerts
+    echo "-- prometheus alerts"; alerts
+    echo "-- alertmanager"; am
+    echo "-- delivered notifications so far"; delivered
   done
   echo "== $(date -u +%FT%TZ) recovery: starting worker"
   $C start worker
   sleep 20
   curl -s localhost:5173/api/v1/projects/1/runs -H "Authorization: Bearer $TOKEN" | python -c "import sys,json;r=json.load(sys.stdin)[0];print('latest run after recovery', r['id'], r['status'])"
-  echo "-- alerts after recovery"; alerts
+  # Resolved notifications go out on the next group_interval (5 min), so wait for them.
+  for _ in $(seq 1 40); do
+    delivered | grep -q '"resolved"' && break
+    sleep 10
+  done
+  echo "== $(date -u +%FT%TZ) after recovery"
+  echo "-- prometheus alerts"; alerts
+  echo "-- alertmanager"; am
+  echo "-- all delivered notifications"; delivered
 } > "$OUT" 2>&1
 echo "drill written to $OUT"

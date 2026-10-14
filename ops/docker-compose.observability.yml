@@ -1,6 +1,7 @@
 # Observability add-on. Run together with the main stack:
 #   docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml up -d --build
 # Grafana: http://localhost:3000 (anonymous viewer)  Prometheus: http://localhost:9090
+# Alertmanager: http://localhost:9093 (alerts are delivered to the alert-sink container's log)
 # Traces: api/worker -> OTel Collector -> Tempo; metrics: Prometheus scrapes api, worker, collector.
 
 services:
@@ -32,6 +33,20 @@ services:
       - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./ops/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
     ports: ["9090:9090"]
+    depends_on: [alertmanager]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes: [./ops/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro]
+    ports: ["9093:9093"]
+    depends_on: [alert-sink]
+
+  # Stand-in for Slack/PagerDuty: prints each delivered alert as one JSON line.
+  alert-sink:
+    image: python:3.12-slim
+    command: ["python", "-u", "/sink/alert_sink.py", "8080"]
+    volumes: [./ops/alertmanager/alert_sink.py:/sink/alert_sink.py:ro]
 
   grafana:
     image: grafana/grafana:11.3.1

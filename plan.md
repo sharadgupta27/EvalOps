@@ -83,7 +83,7 @@ Teams ship prompts and RAG pipelines the way people shipped code before unit tes
 | Containers | Docker, Docker Compose (`api`, `worker`, `frontend`/nginx, `db`) |
 | CI/CD | GitHub Actions: lint → test → build → push to GHCR → deploy |
 | Hosting | AWS EC2 (t3.small) running Compose behind Caddy (HTTPS). Stretch: ECS Fargate + RDS |
-| Observability | OpenTelemetry → Prometheus / Loki / Tempo / Grafana (`ops/`) |
+| Observability | OpenTelemetry → Prometheus / Loki / Tempo / Grafana, Alertmanager (`ops/`) |
 | Security | gitleaks, Semgrep, Trivy, pip-audit, npm audit |
 
 ---
@@ -148,7 +148,7 @@ backend/
   tests/{unit,integration}/
 e2e/                      # Playwright
 .github/workflows/{ci.yml,deploy.yml,eval-gate.yml}
-ops/                      # otel collector, grafana dashboards, alert rules
+ops/                      # otel collector, grafana dashboards, alert rules, alertmanager
 security/                 # scan outputs, PR audit, ai-data-policy.md
 docs/
   ai-workflow.md          # prompts, delegation, review log  (rubric criterion 2)
@@ -248,9 +248,9 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 8, 10, 11, 14 · **Guide chapter:** *"Shipping it: Docker Compose, GitHub Actions and AWS for a solo AI engineer"*.
 
 ### Phase 7: Observability (≈ 0.5 week)
-- [x] OpenTelemetry tracing across api → worker → LLM call (span attributes: model, tokens, cost)
+- [x] OpenTelemetry tracing across api → worker → LLM call (span attributes: model, tokens, cost); one trace per run via `traceparent` stored on the job row
 - [x] Grafana dashboard: run throughput, LLM latency, error rate, spend per day
-- [x] One actionable alert (for example, worker queue age > 5 min)
+- [x] One actionable alert (for example, worker queue age > 5 min), routed through Alertmanager by severity
 - [x] Separate dev and prod environment configs
 
 **Rubric:** 13 (operational diagnosis) · **Guide chapter:** *"Observability for LLM apps: tracing tokens and dollars"*.

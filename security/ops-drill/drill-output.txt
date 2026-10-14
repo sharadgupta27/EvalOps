@@ -1,65 +1,102 @@
-== 2026-10-14T01:03:05Z drill start: stopping worker
+== 2026-10-14T10:40:50Z drill start: stopping worker
  Container evalops-worker-1 Stopping 
  Container evalops-worker-1 Stopped 
 == queue a run while the worker is down
-{"id":12,"project_id":1,"prompt_version_id":1,"prompt_label":"v1","dataset_id":1,"status":"queued","triggered_by":"ui","git_sha":null,"progress":{"done":0,"total":30},"summary":null,"total_tokens":0,"cost_usd":0.0,"error":null,"baseline_run_id":null,"created_at":"2026-10-14T01:03:06.696086Z","started_at":null,"finished_at":null}
+{"id":21,"project_id":1,"prompt_version_id":1,"prompt_label":"v1","dataset_id":1,"status":"queued","triggered_by":"ui","git_sha":null,"progress":{"done":0,"total":30},"summary":null,"total_tokens":0,"cost_usd":0.0,"error":null,"baseline_run_id":null,"created_at":"2026-10-14T10:40:52.886872Z","started_at":null,"finished_at":null}
 == t+1m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791939847.325,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"pending","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974513.299,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974513.512,"59.727708"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"pending","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+-- delivered notifications so far
 == t+2m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791939907.773,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"pending","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974575.661,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974575.739,"119.717322"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"pending","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+-- delivered notifications so far
 == t+3m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791939968.144,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974637.070,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974637.150,"179.713122"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+  WorkerDown active 
+-- delivered notifications so far
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
 == t+4m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791940028.504,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974698.444,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974698.527,"239.708993"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+  WorkerDown active 
+-- delivered notifications so far
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
 == t+5m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791940088.847,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974759.957,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974760.025,"299.705353"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+  WorkerDown active 
+-- delivered notifications so far
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
 == t+6m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791940149.235,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 5m 30s old"},"state":"pending","activeAt":"2026-10-14T01:08:19.815382715Z","value":"3.30890385e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974821.408,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974821.506,"359.698211"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 5m 29s old"},"state":"pending","activeAt":"2026-10-14T10:46:19.815382715Z","value":"3.29705791e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+  WorkerDown active 
+-- delivered notifications so far
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
 == t+7m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791940209.572,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 6m 30s old"},"state":"pending","activeAt":"2026-10-14T01:08:19.815382715Z","value":"3.90884989e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974882.977,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974883.066,"419.684036"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 6m 29s old"},"state":"pending","activeAt":"2026-10-14T10:46:19.815382715Z","value":"3.8981318e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+  WorkerDown active 
+-- delivered notifications so far
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
 == t+8m
 -- up{job=evalops-worker}
-{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791940269.934,"0"]}]}}
--- queue age (api-side gauge is only updated by the worker, so use the DB via API below)
-latest run 12 queued created 2026-10-14T01:03:06.696086Z
--- alerts
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 7m 30s old"},"state":"firing","activeAt":"2026-10-14T01:08:19.815382715Z","value":"4.50881367e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
-== 2026-10-14T01:11:10Z recovery: starting worker
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","env":"dev","instance":"worker:9101","job":"evalops-worker"},"value":[1791974944.617,"0"]}]}}
+-- queue age (exported by the API, so it survives the worker)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1791974944.725,"479.693307"]}]}}
+latest run 21 queued created 2026-10-14T10:40:52.886872Z
+-- prometheus alerts
+{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 7m 44s old"},"state":"firing","activeAt":"2026-10-14T10:46:19.815382715Z","value":"4.64677348e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T10:41:04.815382715Z","value":"0e+00"}]}}
+-- alertmanager
+  WorkerDown active 
+  EvalQueueStuck suppressed inhibitedBy
+-- delivered notifications so far
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
+== 2026-10-14T10:49:06Z recovery: starting worker
  Container evalops-db-1 Waiting 
  Container evalops-db-1 Healthy 
  Container evalops-migrate-1 Starting 
@@ -68,6 +105,11 @@ latest run 12 queued created 2026-10-14T01:03:06.696086Z
  Container evalops-migrate-1 Exited 
  Container evalops-worker-1 Starting 
  Container evalops-worker-1 Started 
-latest run after recovery 12 succeeded
--- alerts after recovery
-{"status":"success","data":{"alerts":[{"labels":{"alertname":"EvalQueueStuck","severity":"page"},"annotations":{"description":"The worker is down, stuck on a run, or overloaded. Check `docker compose ps worker` and worker logs.","runbook_url":"docs/runbook.md#queue-stuck","summary":"Oldest queued eval run is 8m 0s old"},"state":"firing","activeAt":"2026-10-14T01:08:19.815382715Z","value":"4.80881964e+02"},{"labels":{"alertname":"WorkerDown","env":"dev","instance":"worker:9101","job":"evalops-worker","severity":"page"},"annotations":{"runbook_url":"docs/runbook.md#worker-down","summary":"EvalOps worker is not scrapeable"},"state":"firing","activeAt":"2026-10-14T01:03:19.815382715Z","value":"0e+00"}]}}
+latest run after recovery 21 succeeded
+== 2026-10-14T10:53:22Z after recovery
+-- prometheus alerts
+{"status":"success","data":{"alerts":[]}}
+-- alertmanager
+-- all delivered notifications
+{"receiver": "page", "status": "firing", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}
+{"receiver": "page", "status": "resolved", "alertname": "WorkerDown", "severity": "page", "summary": "EvalOps worker is not scrapeable", "startsAt": "2026-10-14T10:43:04.815Z"}

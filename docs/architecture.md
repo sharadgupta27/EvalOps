@@ -29,7 +29,7 @@
 | Contract | OpenAPI 3.1 | Source of truth: Spectral lint, generated TS client, backend drift test |
 | Containers | Docker, Compose | `db`, `migrate` (one-shot Alembic), `api`, `worker`, `frontend`; prod adds `caddy` |
 | CI/CD | GitHub Actions | `ci.yml` (contract, backend, frontend, agent pack, E2E, security) → `deploy.yml` (GHCR images, Trivy, SSH roll-out, health check); `eval-gate.yml`; `nightly-triage.yml` |
-| Observability | OpenTelemetry, Prometheus, Tempo, Grafana | `ops/`: dashboard, 4 alert rules, runbook |
+| Observability | OpenTelemetry, Prometheus, Tempo, Grafana, Alertmanager | `ops/`: traces, dashboard, 4 alert rules; Alertmanager routes `page` and `ticket` severities to separate receivers and suppresses `EvalQueueStuck` while `WorkerDown` fires; runbook |
 
 ## Key decisions
 

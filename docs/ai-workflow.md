@@ -109,6 +109,9 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   queued (422), when the worker claims it (fails without calling the model) and after each
   case. Closes the "no daily budget" residual risk. Test:
   `test_daily_budget_blocks_new_runs_and_stops_queued_ones`.
+- **Alertmanager:** severity routing (`page`/`ticket`), grouping, repeat intervals and an
+  inhibit rule (`WorkerDown` suppresses `EvalQueueStuck`); a stdlib webhook sink stands in for
+  Slack locally. Drill re-run: one page, the symptom alert suppressed, one "resolved".
 
 ## Prompts that worked well
 

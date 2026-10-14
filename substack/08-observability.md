@@ -67,6 +67,27 @@ An alert should mean *someone needs to do something now*, and link to what. Eval
 
 Each has a section in [docs/runbook.md](../docs/runbook.md).
 
+Prometheus decides *whether* an alert fires. **Alertmanager** decides *who hears about it, and
+how often*. Three ideas carry most of the value:
+
+- **Routing by severity.** `severity: page` goes to the receiver that wakes someone up
+  (notify after 10 s, repeat hourly); `ticket` alerts batch up for working hours.
+- **Grouping and repeat intervals.** Ten alerts from one incident become one message, and a
+  long outage doesn't send a notification every 15 seconds.
+- **Inhibition.** When the worker is down the queue is *always* stuck. An inhibit rule
+  suppresses `EvalQueueStuck` while `WorkerDown` fires, so the page names the cause, not the
+  symptom.
+
+```yaml
+inhibit_rules:
+  - source_matchers: ['alertname="WorkerDown"']
+    target_matchers: ['alertname="EvalQueueStuck"']
+```
+
+Locally both receivers post to a 40-line standard-library webhook (`alert_sink.py`) that
+prints each alert, so routing can be tested without a Slack workspace. Swapping it for Slack
+or PagerDuty is a config change, with the secret read from a mounted file.
+
 ## Concept 4: drill it, and find your blind spots
 
 I didn't want to *believe* the alerts worked; I wanted to watch them. So I wrote a drill
@@ -77,15 +98,19 @@ script: stop the worker, queue a run, and record Prometheus every minute for 8 m
 in the exact outage it was written for. The fix: the API also computes the queue age every
 time Prometheus scrapes it.
 
-The drill then produced this timeline:
+After adding Alertmanager I ran the drill again and also recorded what was actually
+*delivered*:
 
-| t | worker up? | run #12 | alerts |
-|---|---|---|---|
-| +1 min | no | queued | `WorkerDown` pending |
-| +3 min | no | queued | **`WorkerDown` firing** |
-| +6 min | no | queued | `EvalQueueStuck` pending |
-| +8 min | no | queued | **`EvalQueueStuck` firing** |
-| restart +20 s | yes | **succeeded** | resolving |
+| t | worker up? | run #21 | Prometheus | notifications delivered |
+|---|---|---|---|---|
+| +1 min | no | queued | `WorkerDown` pending | none |
+| +3 min | no | queued | **`WorkerDown` firing** | **page: `WorkerDown`** |
+| +6 min | no | queued | `EvalQueueStuck` pending | (no change) |
+| +8 min | no | queued | **`EvalQueueStuck` firing** | none: inhibited by `WorkerDown` |
+| restart +20 s | yes | **succeeded** | resolving | |
+| restart +4 min | yes | succeeded | none | **page: `WorkerDown` resolved** |
+
+One outage, one page, one all-clear.
 
 Because the queue lives in Postgres, recovery is just a restart: the queued run was picked up
 automatically and no data was lost. The full write-up is in
