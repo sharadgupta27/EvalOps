@@ -1,0 +1,55 @@
+name: Eval gate
+
+# Dogfooding: EvalOps gates its own prompts.
+# 1. Changes to the LLM-judge prompt must keep agreement with human labels >= 80%.
+# 2. Changes to the product prompt (prompts/) must pass the EvalOps CI gate vs baseline v1.
+on:
+  pull_request:
+    paths:
+      - "backend/app/evaluators/prompts/**"
+      - "backend/app/evaluators/calibration/**"
+      - "prompts/**"
+      - ".github/workflows/eval-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  judge-calibration:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    env:
+      # The real judge runs when the repo has an ANTHROPIC_API_KEY secret; otherwise FakeProvider.
+      LLM_PROVIDER: ${{ secrets.ANTHROPIC_API_KEY != '' && 'anthropic' || 'fake' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --python 3.12
+      - name: Judge vs human labels
+        run: |
+          uv run python -m app.evaluators.calibrate --min-agreement 0.8 | tee calibration.json
+          {
+            echo "### Judge calibration ($LLM_PROVIDER)"
+            jq -r '"Agreement **\(.agreement * 100 | floor)%** on \(.examples) examples"' calibration.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  prompt-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start EvalOps (FakeProvider)
+        run: docker compose up -d --build --wait
+      - name: Seed baseline project and get an API key
+        run: |
+          mkdir -p .ci && chmod 777 .ci
+          docker compose run --rm -v "$PWD/.ci:/out" api python -m app.seed --api-key-out /out/seed.json
+          echo "::add-mask::$(jq -r .api_key .ci/seed.json)"
+          echo "EVALOPS_API_KEY=$(jq -r .api_key .ci/seed.json)" >> "$GITHUB_ENV"
+          echo "DATASET_ID=$(jq -r .dataset_id .ci/seed.json)" >> "$GITHUB_ENV"
+      - name: Gate the PR's prompt against v1
+        run: |
+          python3 scripts/evalops_gate.py --url http://localhost:5173 \
+            --dataset-id "$DATASET_ID" --baseline-label v1 \
+            --head-label "pr-${{ github.event.pull_request.number }}-${GITHUB_SHA::7}" \
+            --template-file prompts/support-reply.txt --git-sha "$GITHUB_SHA"
