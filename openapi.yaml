@@ -442,8 +442,8 @@ paths:
         - name: limit
           in: query
           required: false
-          description: Return at most this many runs, newest first. Omit to return all.
-          schema: { type: integer, minimum: 1, maximum: 200 }
+          description: Return at most this many runs, newest first.
+          schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
       responses:
         '200':
           description: OK

@@ -148,10 +148,13 @@ class Repo:
         return await self.s.scalar(select(GatePolicy).where(GatePolicy.project_id == project_id))
 
     # --- runs ----------------------------------------------------------------
-    async def runs(self, project_id: int, limit: int | None = None) -> Sequence[EvalRun]:
-        q = select(EvalRun).where(EvalRun.project_id == project_id).order_by(EvalRun.id.desc())
-        if limit is not None:
-            q = q.limit(limit)
+    async def runs(self, project_id: int, limit: int = 100) -> Sequence[EvalRun]:
+        q = (
+            select(EvalRun)
+            .where(EvalRun.project_id == project_id)
+            .order_by(EvalRun.id.desc())
+            .limit(limit)
+        )
         return (await self.s.scalars(q)).all()
 
     async def run(self, run_id: int) -> EvalRun | None:

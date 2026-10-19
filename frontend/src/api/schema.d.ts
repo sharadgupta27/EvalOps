@@ -1403,7 +1403,7 @@ export interface operations {
     listRuns: {
         parameters: {
             query?: {
-                /** @description Return at most this many runs, newest first. Omit to return all. */
+                /** @description Return at most this many runs, newest first. */
                 limit?: number;
             };
             header?: never;

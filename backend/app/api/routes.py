@@ -300,7 +300,7 @@ async def list_runs(
     p: PrincipalDep,
     repo: RepoDep,
     settings: SettingsDep,
-    limit: Annotated[int | None, Query(ge=1, le=200)] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
 ) -> list[EvalRun]:
     return await RunService(repo, settings).list_all(p, project_id, limit)
 

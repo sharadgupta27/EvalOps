@@ -127,10 +127,14 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   `../evalops-frontend` in parallel.
 - **Produced (contract first):** optional `limit` query param (1–200) on `listRuns` in
   `openapi.yaml` → `npm run gen:api` (only `schema.d.ts` changed) → route
-  (`Query(ge=1, le=200)`) → `RunService.list_all` → `Repo.runs`, which applies `.limit()` only
-  when given. Omitting `limit` now returns all runs (the repository previously capped at 100).
-- **Verified:** new `test_list_runs_limit` (newest N, omitted = all, 0 and 201 → 422);
-  contract drift test, full unit suite, ruff, ruff format, mypy and frontend typecheck green.
+  (`Query(ge=1, le=200)`) → `RunService.list_all` → `Repo.runs`.
+- **Reviewed / changed:** the subagent followed the brief ("omit to return all") and removed
+  the repository's existing 100-run cap, making the list unbounded. The orchestrator rejected
+  that in review (it undid a hardening guard) and set `default: 100` in the contract, route,
+  service and repository, so omitting `limit` behaves exactly as before.
+- **Verified:** new `test_list_runs_limit` (newest N, omitted = all 3, 0 and 201 → 422);
+  contract drift test, full unit suite, ruff, ruff format, mypy, Spectral and frontend
+  typecheck green.
 
 ## Prompts that worked well
 

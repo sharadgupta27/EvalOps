@@ -62,9 +62,7 @@ class RunService(Service):
         await self.project_for(p, row.project_id)
         return row
 
-    async def list_all(
-        self, p: Principal, project_id: int, limit: int | None = None
-    ) -> list[EvalRun]:
+    async def list_all(self, p: Principal, project_id: int, limit: int = 100) -> list[EvalRun]:
         await self.project_for(p, project_id)
         rows = await self.repo.runs(project_id, limit)
         labels = await self.repo.labels_for({r.prompt_version_id for r in rows})
