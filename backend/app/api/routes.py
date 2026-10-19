@@ -296,9 +296,13 @@ async def delete_evaluator(
 # --- runs ---------------------------------------------------------------------
 @router.get("/projects/{project_id}/runs", tags=["runs"], operation_id="listRuns")
 async def list_runs(
-    project_id: int, p: PrincipalDep, repo: RepoDep, settings: SettingsDep
+    project_id: int,
+    p: PrincipalDep,
+    repo: RepoDep,
+    settings: SettingsDep,
+    limit: Annotated[int | None, Query(ge=1, le=200)] = None,
 ) -> list[EvalRun]:
-    return await RunService(repo, settings).list_all(p, project_id)
+    return await RunService(repo, settings).list_all(p, project_id, limit)
 
 
 @router.post(

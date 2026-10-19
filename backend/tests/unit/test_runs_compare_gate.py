@@ -48,6 +48,23 @@ async def test_run_lifecycle_and_summary(api: Api) -> None:
     assert [r["prompt_label"] for r in await api.ok("GET", f"/projects/{pid}/runs")] == ["v1"]
 
 
+async def test_list_runs_limit(api: Api) -> None:
+    ids = await setup_project(api)
+    pid, ds = ids["project_id"], ids["dataset_id"]
+    v1 = await api.version(pid, "v1", SUPPORT_TEMPLATE_V1)
+    body = {"prompt_version_id": v1, "dataset_id": ds}
+    created = [
+        (await api.ok("POST", f"/projects/{pid}/runs", 202, json=body))["id"] for _ in range(3)
+    ]
+    newest_first = sorted(created, reverse=True)
+
+    assert [r["id"] for r in await api.ok("GET", f"/projects/{pid}/runs")] == newest_first
+    limited = await api.ok("GET", f"/projects/{pid}/runs", params={"limit": 2})
+    assert [r["id"] for r in limited] == newest_first[:2]
+    for bad in (0, 201):
+        await api.ok("GET", f"/projects/{pid}/runs", 422, params={"limit": bad})
+
+
 async def test_run_guardrails(api: Api) -> None:
     ids = await api.project_with_dataset()
     pid, ds = ids["project_id"], ids["dataset_id"]

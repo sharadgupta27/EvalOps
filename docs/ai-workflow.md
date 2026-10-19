@@ -120,6 +120,18 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   inhibit rule (`WorkerDown` suppresses `EvalQueueStuck`); a stdlib webhook sink stands in for
   Slack locally. Drill re-run: one page, the symptom alert suppressed, one "resolved".
 
+### 2026-10-20 · Phase 8: parallel worktree demo, backend half (`limit` on list runs)
+- **Delegation:** the orchestrator session split the feature into two tasks and handed this
+  one to a subagent working only in the git worktree `../evalops-backend` (branch
+  `feat/runs-pagination`), while a second subagent did the frontend half in
+  `../evalops-frontend` in parallel.
+- **Produced (contract first):** optional `limit` query param (1–200) on `listRuns` in
+  `openapi.yaml` → `npm run gen:api` (only `schema.d.ts` changed) → route
+  (`Query(ge=1, le=200)`) → `RunService.list_all` → `Repo.runs`, which applies `.limit()` only
+  when given. Omitting `limit` now returns all runs (the repository previously capped at 100).
+- **Verified:** new `test_list_runs_limit` (newest N, omitted = all, 0 and 201 → 422);
+  contract drift test, full unit suite, ruff, ruff format, mypy and frontend typecheck green.
+
 ## Prompts that worked well
 
 - "Read plan.md and CLAUDE.md; implement one phase at a time, run the tests after each slice,

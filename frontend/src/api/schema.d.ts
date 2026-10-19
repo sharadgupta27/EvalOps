@@ -1402,7 +1402,10 @@ export interface operations {
     };
     listRuns: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Return at most this many runs, newest first. Omit to return all. */
+                limit?: number;
+            };
             header?: never;
             path: {
                 project_id: components["parameters"]["ProjectId"];
