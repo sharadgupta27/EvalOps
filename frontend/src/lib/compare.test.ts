@@ -1,5 +1,7 @@
 import {
+  compareCasesToCsv,
   compareVerdict,
+  csvCell,
   filterCases,
   highlightNewWords,
   sortCases,
@@ -81,5 +83,46 @@ describe("highlightNewWords", () => {
     const parts = highlightNewWords("thanks for asking", "Thanks for waiting");
     expect(parts.filter((p) => p.added).map((p) => p.text)).toEqual(["waiting"]);
     expect(parts.map((p) => p.text).join("")).toBe("Thanks for waiting");
+  });
+});
+
+describe("compareCasesToCsv", () => {
+  it("writes a header row and one CRLF-terminated row per case", () => {
+    const csv = compareCasesToCsv([c(2, "regressed", -0.5)]);
+    expect(csv).toBe(
+      "test_case_id,bucket,base_passed,head_passed,base_score,head_score,delta,inputs," +
+        "expected_output,base_output,head_output\r\n" +
+        '2,regressed,true,false,1,0.5,-0.5,"{""question"":""question 2""}",,base,x\r\n',
+    );
+  });
+
+  it("quotes commas, quotes and newlines per RFC 4180", () => {
+    expect(csvCell("a,b")).toBe('"a,b"');
+    expect(csvCell('say "hi"')).toBe('"say ""hi"""');
+    expect(csvCell("line1\nline2")).toBe('"line1\nline2"');
+    expect(csvCell("line1\r\nline2")).toBe('"line1\r\nline2"');
+    expect(csvCell("plain")).toBe("plain");
+  });
+
+  it("writes null and undefined as empty cells", () => {
+    expect(csvCell(null)).toBe("");
+    expect(csvCell(undefined)).toBe("");
+    const row = compareCasesToCsv([c(5, "added", null)]).split("\r\n")[1] ?? "";
+    const cells = row.split(",");
+    expect(cells[5]).toBe("");
+    expect(cells[6]).toBe("");
+  });
+
+  it("neutralises formula injection in text cells but keeps numbers numeric", () => {
+    expect(csvCell("=HYPERLINK(1)")).toBe("'=HYPERLINK(1)");
+    expect(csvCell("+1")).toBe("'+1");
+    expect(csvCell("-2")).toBe("'-2");
+    expect(csvCell("@SUM(A1)")).toBe("'@SUM(A1)");
+    expect(csvCell("\tx")).toBe("'\tx");
+    expect(csvCell("\rx")).toBe('"\'\rx"');
+    expect(csvCell('=1,"a"')).toBe('"\'=1,""a"""');
+    expect(csvCell(-0.5)).toBe("-0.5");
+    const csv = compareCasesToCsv([c(9, "regressed", -1, "=cmd|' /C calc'!A0")]);
+    expect(csv).toContain(",'=cmd|' /C calc'!A0\r\n");
   });
 });

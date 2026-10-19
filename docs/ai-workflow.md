@@ -136,6 +136,22 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   contract drift test, full unit suite, ruff, ruff format, mypy, Spectral and frontend
   typecheck green.
 
+### 2026-10-20 · Phase 8: parallel worktrees, frontend half (Compare CSV export)
+- **Delegation:** the orchestrator session split one feature across two git worktrees and
+  handed this half to a subagent in `../evalops-frontend` (branch `feat/compare-export`);
+  the backend half ran in parallel in `../evalops-backend`. Brief: frontend only, no
+  `openapi.yaml`/`src/api/` edits, no new dependencies, commit but don't push or merge.
+- **Produced:** `compareCasesToCsv` + `csvCell` in `src/lib/compare.ts` (RFC 4180 quoting,
+  CRLF, nulls as empty cells, `'` prefix on text cells starting with `= + - @ \t \r` because
+  inputs and model outputs are untrusted); an "Export CSV" button in `CompareTable` that
+  downloads the currently filtered and sorted rows as `compare-run-{base}-vs-{head}.csv`
+  (Blob + object URL, revoked after the click), disabled when nothing matches.
+- **Decision:** numeric cells (e.g. a negative delta) are not prefixed, so they stay numbers
+  in a spreadsheet; only string cells can carry a formula.
+- **Verified:** 7 new Vitest tests (CSV quoting, injection prefix, header, nulls; export uses
+  only the filtered rows, file name, revoke, disabled state); `npm run test`, `lint`,
+  `typecheck` and `prettier --check .` all green.
+
 ## Prompts that worked well
 
 - "Read plan.md and CLAUDE.md; implement one phase at a time, run the tests after each slice,

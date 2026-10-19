@@ -55,7 +55,7 @@ export function ComparePage() {
         />
       </div>
       <Card title="Cases">
-        <CompareTable cases={d.cases} />
+        <CompareTable cases={d.cases} baseRunId={d.base.id} headRunId={d.head.id} />
       </Card>
     </>
   );

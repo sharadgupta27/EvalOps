@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import {
+  compareCasesToCsv,
   filterCases,
   highlightNewWords,
   sortCases,
@@ -7,7 +8,7 @@ import {
   type CompareCase,
 } from "../lib/compare";
 import { formatScore, previewInputs } from "../lib/format";
-import { Badge, Empty, Input } from "./ui";
+import { Badge, Button, Empty, Input } from "./ui";
 
 const BUCKET_TONE = {
   regressed: "bad",
@@ -24,7 +25,26 @@ const FILTERS: { value: BucketFilter; label: string }[] = [
   { value: "all", label: "All" },
 ];
 
-export function CompareTable({ cases }: { cases: CompareCase[] }) {
+function downloadCsv(csv: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function CompareTable({
+  cases,
+  baseRunId,
+  headRunId,
+}: {
+  cases: CompareCase[];
+  baseRunId?: number;
+  headRunId?: number;
+}) {
   const [filter, setFilter] = useState<BucketFilter>("changed");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<number | null>(null);
@@ -61,6 +81,21 @@ export function CompareTable({ cases }: { cases: CompareCase[] }) {
           aria-label="Search cases"
         />
         <span className="text-xs text-slate-500">{visible.length} case(s)</span>
+        <Button
+          variant="secondary"
+          className="ml-auto"
+          disabled={visible.length === 0}
+          onClick={() =>
+            downloadCsv(
+              compareCasesToCsv(visible),
+              baseRunId !== undefined && headRunId !== undefined
+                ? `compare-run-${baseRunId}-vs-${headRunId}.csv`
+                : "compare.csv",
+            )
+          }
+        >
+          Export CSV
+        </Button>
       </div>
       {visible.length === 0 ? (
         <Empty>No cases match this filter.</Empty>

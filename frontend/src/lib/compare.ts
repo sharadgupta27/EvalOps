@@ -65,3 +65,38 @@ export function highlightNewWords(base: string, head: string): { text: string; a
       added: !/^\s+$/.test(part) && !baseWords.has(part.toLowerCase()),
     }));
 }
+
+const CSV_COLUMNS: { header: string; value: (c: CompareCase) => unknown }[] = [
+  { header: "test_case_id", value: (c) => c.test_case_id },
+  { header: "bucket", value: (c) => c.bucket },
+  { header: "base_passed", value: (c) => c.base_passed },
+  { header: "head_passed", value: (c) => c.head_passed },
+  { header: "base_score", value: (c) => c.base_score },
+  { header: "head_score", value: (c) => c.head_score },
+  { header: "delta", value: (c) => c.delta },
+  { header: "inputs", value: (c) => JSON.stringify(c.inputs) },
+  { header: "expected_output", value: (c) => c.expected_output },
+  { header: "base_output", value: (c) => c.base_output },
+  { header: "head_output", value: (c) => c.head_output },
+];
+
+/**
+ * One CSV cell. Text cells are untrusted (inputs and model outputs), so a leading formula
+ * trigger gets a `'` prefix to stop spreadsheets from evaluating it. Numbers we produce
+ * ourselves (e.g. a negative delta) are left alone so they stay numeric.
+ */
+export function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  let text = String(value);
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/** RFC 4180 CSV of compare cases, in the order given, with CRLF line endings. */
+export function compareCasesToCsv(cases: CompareCase[]): string {
+  const rows = [
+    CSV_COLUMNS.map((col) => col.header),
+    ...cases.map((c) => CSV_COLUMNS.map((col) => csvCell(col.value(c)))),
+  ];
+  return rows.map((r) => r.join(",")).join("\r\n") + "\r\n";
+}
