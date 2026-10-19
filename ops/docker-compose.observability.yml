@@ -2,7 +2,8 @@
 #   docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml up -d --build
 # Grafana: http://localhost:3000 (anonymous viewer)  Prometheus: http://localhost:9090
 # Alertmanager: http://localhost:9093 (alerts are delivered to the alert-sink container's log)
-# Traces: api/worker -> OTel Collector -> Tempo; metrics: Prometheus scrapes api, worker, collector.
+# Traces: api/worker -> OTel Collector -> Tempo; metrics: Prometheus scrapes api, worker, collector;
+# logs: Alloy tails the api/worker/frontend containers' stdout (Docker socket, read-only) -> Loki.
 
 services:
   api:
@@ -23,6 +24,20 @@ services:
     image: grafana/tempo:2.6.1
     command: ["-config.file=/etc/tempo.yaml"]
     volumes: [./ops/tempo.yaml:/etc/tempo.yaml:ro]
+
+  loki:
+    image: grafana/loki:3.3.2
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes: [./ops/loki.yaml:/etc/loki/config.yaml:ro]
+
+  alloy:
+    image: grafana/alloy:v1.5.1
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./ops/alloy.alloy:/etc/alloy/config.alloy:ro
+      # Read-only, but the Docker socket still exposes the host's containers: local/demo use only.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on: [loki]
 
   prometheus:
     image: prom/prometheus:v2.55.1
@@ -58,4 +73,4 @@ services:
       - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports: ["3000:3000"]
-    depends_on: [prometheus, tempo]
+    depends_on: [prometheus, tempo, loki]

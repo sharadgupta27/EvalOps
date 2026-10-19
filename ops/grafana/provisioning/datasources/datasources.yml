@@ -11,6 +11,25 @@ datasources:
     type: tempo
     access: proxy
     url: http://tempo:3200
+    jsonData:
+      # Trace -> logs: jump from a span to the api/worker log lines carrying its trace_id.
+      tracesToLogsV2:
+        datasourceUid: loki
+        filterByTraceID: false
+        customQuery: true
+        query: '{service=~"api|worker"} | json | trace_id="$${__trace.traceId}"'
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      # Logs -> trace: turns the trace_id field of a JSON log line into a link to Tempo.
+      derivedFields:
+        - name: trace_id
+          matcherRegex: '"trace_id": ?"(\w+)"'
+          url: '$${__value.raw}'
+          datasourceUid: tempo
   - name: Alertmanager
     uid: alertmanager
     type: alertmanager

@@ -85,3 +85,17 @@ git checkout prompts/support-reply.txt
 
 Expected: two `git worktree` checkouts, two subagent runs, then the orchestrator merges and
 runs the full suites.
+
+What happened when this was run (2026-10-20, branches kept in git):
+
+1. The orchestrator ran `git worktree add ../evalops-frontend -b feat/compare-export` and
+   `git worktree add ../evalops-backend -b feat/runs-pagination`, then started one background
+   subagent per worktree with a written brief: which files it may touch, the checks it must
+   pass, and to commit on its branch without merging.
+2. Both subagents worked at the same time (about 6 and 8 minutes) and each committed one green change.
+3. Review caught one problem: the backend brief said "omit `limit` to return all", so the
+   subagent removed the existing 100-run cap. The orchestrator restored `default: 100` in a
+   follow-up commit (`fix(api): keep the 100-run default cap on list runs`).
+4. The contract change went first: `feat/compare-export` was rebased onto `feat/runs-pagination`.
+   The only conflict was the two appended `docs/ai-workflow.md` entries. Then `main` was
+   fast-forwarded, and the suites were run on the result.

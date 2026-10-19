@@ -250,6 +250,7 @@ Effort estimates assume part-time work (about 10 h/week).
 ### Phase 7: Observability (≈ 0.5 week)
 - [x] OpenTelemetry tracing across api → worker → LLM call (span attributes: model, tokens, cost); one trace per run via `traceparent` stored on the job row
 - [x] Grafana dashboard: run throughput, LLM latency, error rate, spend per day
+- [x] Logs in Loki: Alloy ships the api/worker JSON logs; Grafana links log lines ⇄ traces by `trace_id`
 - [x] One actionable alert (for example, worker queue age > 5 min), routed through Alertmanager by severity
 - [x] Separate dev and prod environment configs
 
@@ -267,7 +268,7 @@ Effort estimates assume part-time work (about 10 h/week).
 | Plugin | `plugins/evalops-agent-pack/` bundles the skills, subagents, hooks and MCP config for reuse in other repos |
 | Custom agent | `custom-agent/agent.py`: nightly scheduled job (GitHub Actions cron) that runs evals, finds regressions and opens an issue with a triage summary |
 | Permissions note | `docs/permissions.md`: what each agent, tool and key may do, and why |
-| Parallel work | Demonstrate 2 subagents in separate git worktrees (for example, a frontend task and a backend task) |
+| Parallel work | Demonstrate 2 subagents in separate git worktrees (for example, a frontend task and a backend task). **Done:** `feat/runs-pagination` (`limit` on list runs) and `feat/compare-export` (Compare CSV export), see `docs/ai-workflow.md` |
 
 **Demo** (`docs/demo.md`): follow the 6-step Module 5 demo script using a real regression.
 **Rubric:** 12 · **Guide chapters:** *"Skills vs subagents vs MCP vs hooks: a mental model"* and *"Building an MCP server for your own app"*.

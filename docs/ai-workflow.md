@@ -152,6 +152,26 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   only the filtered rows, file name, revoke, disabled state); `npm run test`, `lint`,
   `typecheck` and `prettier --check .` all green.
 
+### 2026-10-20 · Plan audit: closing the last two code gaps
+- **Goal:** the human asked whether anything in `plan.md` was missing. The audit found two gaps
+  the checkboxes didn't show: the parallel worktree demo was documented but never run, and
+  Loki was in the tech stack but not in `ops/`. The human asked to implement both.
+- **Delegation:** the orchestrator ran the worktree demo (two subagents, entries above) and
+  added Loki itself on `main` while they worked; the files don't overlap.
+- **Produced (Loki):** `ops/loki.yaml` (single process, filesystem, 7-day retention),
+  `ops/alloy.alloy` (Grafana Alloy tails the api/worker/frontend containers through the Docker
+  socket, read-only; only `service` and `level` become labels, so `trace_id` and `run_id`
+  stay in the line; drops entries older than 1 h so a container's replayed history doesn't
+  trigger Loki 400s), `loki` and `alloy` services in the observability compose file, a Loki
+  datasource with log → trace links to Tempo and trace → log links back, two dashboard panels,
+  LogQL in the runbook, and log retention in the data policy.
+- **Verified:** `loki -verify-config` and `alloy fmt` pass. The whole stack was brought up with the
+  add-on, and a 30-case run was started. Its "run finished" worker line in Loki carried a
+  `trace_id` that Tempo resolved to a 96-span trace. Every LogQL query in the runbook was
+  run against Loki. The first attempt surfaced the replayed-history 400s, which led to the drop stage.
+- **Found on the way:** the runbook's `grep "generation failed"` step never matches, because
+  that text is stored on the result row and never logged. It is left as is for a separate fix.
+
 ## Prompts that worked well
 
 - "Read plan.md and CLAUDE.md; implement one phase at a time, run the tests after each slice,

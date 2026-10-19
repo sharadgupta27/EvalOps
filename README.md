@@ -50,7 +50,7 @@ Sign up → create *Support reply generator* → save prompt `v1` → import 30 
 Browser ─▶ (Caddy TLS) ─▶ nginx: React SPA + /api proxy ─▶ FastAPI ─▶ PostgreSQL ◀─ Worker ─▶ LLMProvider
                                                              ▲          (jobs table,        ├ Anthropic (prod)
 GitHub Actions / MCP server / triage agent ── X-API-Key ─────┘     SELECT … SKIP LOCKED)    └ Fake (tests, CI, demo)
-OpenTelemetry ─▶ Collector ─▶ Tempo · Prometheus ─▶ Grafana (dashboard) · Alertmanager (routing)
+OpenTelemetry ─▶ Collector ─▶ Tempo · Prometheus · Alloy ─▶ Loki ─▶ Grafana (dashboard) · Alertmanager (routing)
 ```
 
 | Layer | Technology | Role |
@@ -63,7 +63,7 @@ OpenTelemetry ─▶ Collector ─▶ Tempo · Prometheus ─▶ Grafana (dashbo
 | Database | PostgreSQL 16 (dev/prod), SQLite (unit tests) | selected by `DATABASE_URL`; migrations with Alembic |
 | Containers | Docker, Docker Compose | `db`, `migrate`, `api`, `worker`, `frontend` (+ `caddy` in prod) |
 | CI/CD | GitHub Actions → GHCR → EC2 | test → build → scan → deploy → health check; eval gate; nightly triage |
-| Observability | OpenTelemetry, Prometheus, Tempo, Grafana, Alertmanager | `ops/`: one trace per run (API → worker → LLM), dashboard, 4 alerts routed by severity, runbook |
+| Observability | OpenTelemetry, Prometheus, Tempo, Loki + Alloy, Grafana, Alertmanager | `ops/`: one trace per run (API → worker → LLM), JSON logs in Loki linked to traces by `trace_id`, dashboard, 4 alerts routed by severity, runbook |
 | Agent pack | Claude Code skills, subagents, hooks, MCP, plugin, custom agent | see below |
 
 More: [docs/architecture.md](docs/architecture.md).
@@ -87,6 +87,7 @@ No API key is needed: `LLM_PROVIDER=fake` is the default. To use Claude:
 With observability: `docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml up -d --build`
 → Grafana http://localhost:3000, Prometheus http://localhost:9090, Alertmanager http://localhost:9093
 (delivered alerts: `docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml logs alert-sink`).
+Logs: Grafana → Explore → Loki, e.g. `{service="worker"} | json | run_id="24"`; the `trace_id` field links to the run's trace in Tempo.
 
 ## Run it (local development)
 

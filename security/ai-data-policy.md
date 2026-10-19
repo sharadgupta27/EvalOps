@@ -26,7 +26,9 @@ adding a case.
   Switching to `anthropic` is an explicit operator decision per environment.
 - **Observability** stores metadata only (model, tokens, cost, latency, ids). Prompts and
   outputs are not put in traces or logs (collector scrubs them as a second line of defence).
-  Traces are kept 48 hours, Prometheus data 15 days.
+  Traces are kept 48 hours, Loki logs 7 days, Prometheus data 15 days. The log shipper
+  (Alloy) mounts the Docker socket read-only to discover containers; that is acceptable for
+  the local/demo add-on only, not for a shared host.
 - **The triage agent** sends truncated regressed cases to Claude to write a summary and posts
   the summary to the project's private GitHub issues.
 

@@ -12,7 +12,8 @@
                                                                       ▼
                                                      LLMProvider ── AnthropicProvider (prod)
                                                                  └─ FakeProvider (tests, CI, demo)
- Observability: api & worker ─OTLP─▶ OTel Collector ─▶ Tempo (traces);  Prometheus scrapes /metrics; Grafana
+ Observability: api & worker ─OTLP─▶ OTel Collector ─▶ Tempo (traces);  Prometheus scrapes /metrics;
+                container stdout (JSON lines) ─▶ Alloy ─▶ Loki (logs);  Grafana links logs ⇄ traces by trace_id
                 The API stores the W3C traceparent on the queued row, so API + worker spans form one trace
 ```
 
@@ -29,7 +30,7 @@
 | Contract | OpenAPI 3.1 | Source of truth: Spectral lint, generated TS client, backend drift test |
 | Containers | Docker, Compose | `db`, `migrate` (one-shot Alembic), `api`, `worker`, `frontend`; prod adds `caddy` |
 | CI/CD | GitHub Actions | `ci.yml` (contract, backend, frontend, agent pack, E2E, security) → `deploy.yml` (GHCR images, Trivy, SSH roll-out, health check); `eval-gate.yml`; `nightly-triage.yml` |
-| Observability | OpenTelemetry, Prometheus, Tempo, Grafana, Alertmanager | `ops/`: traces, dashboard, 4 alert rules; Alertmanager routes `page` and `ticket` severities to separate receivers and suppresses `EvalQueueStuck` while `WorkerDown` fires; runbook |
+| Observability | OpenTelemetry, Prometheus, Tempo, Loki + Alloy, Grafana, Alertmanager | `ops/`: traces, JSON logs in Loki (only `service` and `level` are labels; `trace_id`/`run_id` stay in the line), dashboard, 4 alert rules; Alertmanager routes `page` and `ticket` severities to separate receivers and suppresses `EvalQueueStuck` while `WorkerDown` fires; runbook |
 
 ## Key decisions
 

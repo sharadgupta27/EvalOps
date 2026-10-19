@@ -13,7 +13,8 @@ The dashboard is *EvalOps overview* in Grafana. Commands assume the prod compose
 **`EvalQueueStuck`**: oldest queued run > 5 minutes.
 1. Is the worker up? `$C ps worker`. If not, see [worker-down](#worker-down).
 2. Is it busy with one huge run? Grafana "Cases by outcome / min" > 0 means it is working.
-   Look at `$C logs worker --tail 100` for the `claimed run` id.
+   Look at `$C logs worker --tail 100` for the `claimed run` id, or in Grafana Explore → Loki:
+   `{service="worker"} | json | msg="claimed run"`.
 3. Stuck on a slow provider? "LLM latency p95" near the timeout (120 s) → check provider
    status; consider lowering `WORKER_CONCURRENCY` if rate-limited (429s in logs).
 4. Scale out: `$C up -d --scale worker=2` (safe: claims use `SKIP LOCKED`).
@@ -47,3 +48,15 @@ Drill: [security/ops-drill/](../security/ops-drill/).
 $C exec db psql -U evalops -c "select status, count(*) from eval_runs group by 1"
 curl -s localhost:8000/metrics | grep evalops_queue    # from inside the host network
 ```
+
+Logs (observability add-on; Grafana → Explore → Loki). api and worker log one JSON object per line;
+only `service` and `level` are labels, so filter the rest with `| json`:
+
+```logql
+{service=~"api|worker", level=~"ERROR|CRITICAL"}                 # everything that went wrong
+{service="worker"} | json | run_id="42"                           # one run, end to end
+{service="worker", level="ERROR"} |= "run crashed"                  # crashed runs, with traceback
+sum by (level) (count_over_time({service="worker"}[5m]))           # error volume over time
+```
+
+Each line with a `trace_id` links to its trace in Tempo, and a Tempo span links back to its logs.

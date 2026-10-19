@@ -1,0 +1,58 @@
+// Ships EvalOps container logs to Loki. api and worker already write one JSON object per line
+// (backend/app/observability.py), so only `level` becomes a label; trace_id/run_id stay in the
+// line and are queried with `| json` (high-cardinality values must not be labels).
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "evalops" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "api|worker|frontend"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "compose_project"
+  }
+}
+
+loki.source.docker "evalops" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.evalops.rules
+  forward_to    = [loki.process.json.receiver]
+}
+
+loki.process "json" {
+  // Reused containers replay their whole history on start; Loki rejects old entries with 400s.
+  stage.drop {
+    older_than          = "1h"
+    drop_counter_reason = "too_old"
+  }
+
+  stage.json {
+    expressions = { level = "level" }
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
