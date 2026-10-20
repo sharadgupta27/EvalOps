@@ -145,6 +145,27 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   contract drift test, full unit suite, ruff, ruff format, mypy, Spectral and frontend
   typecheck green.
 
+### 2026-10-21 · Stretch: `POST /gate/ingest` (CiteSure results gated by EvalOps)
+
+- **Goal:** let CiteSure's CI send the per-question results of its own RAG evaluation to EvalOps
+  and fail the build on EvalOps' verdict, so the two projects form one pipeline. `/gate` could
+  not do it: it always runs a prompt itself.
+- **Delegation:** the main session traced the gate, run and compare code, then followed
+  `review-api-change`. The `api-contract-reviewer` subagent type was not registered in that
+  session, so a general-purpose subagent was given the reviewer's checklist and told to stay
+  read-only. It reviewed the planned contract before any file was edited.
+- **Reviewer found (both accepted):** `output` ≤ 50000 × 1000 results allowed a ~50 MB body
+  (now 5000 × 200, under the 2 MB body limit); an unknown `baseline_label` must be a 404 as in
+  `/gate`, with only a known label that has no succeeded run skipping the checks. It also asked
+  for a strict external-version marker (model **and** constant template), a permissions table
+  update and a threat-model row (T11).
+- **Produced (contract first):** `/gate/ingest` + `IngestRequest`/`IngestCaseResult` in
+  `openapi.yaml` → `gen:api` → schemas, route, `RunService.ingest_gate` (one transaction, no
+  migration), 15 unit tests, `permissions.md`, T11.
+- **Decisions the human made:** a hosted EvalOps in CiteSure's CI (history and per-question
+  regressions) rather than an ephemeral stack (absolute thresholds only).
+- **Verified:** contract drift test, unit and integration suites, ruff, mypy, Spectral.
+
 ### 2026-10-20 · Phase 8: parallel worktrees, frontend half (Compare CSV export)
 
 - **Delegation:** the orchestrator session split one feature across two git worktrees and

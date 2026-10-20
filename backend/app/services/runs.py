@@ -1,10 +1,15 @@
 """Runs, results, comparison and the CI gate."""
 
+from collections import Counter
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime
 from typing import Any
 
 from app.errors import Conflict, Invalid, NotFound
+from app.models import EvalResult as EvalResultRow
 from app.models import EvalRun as EvalRunRow
-from app.models import RunStatus, TriggeredBy
+from app.models import PromptVersion as PromptVersionRow
+from app.models import RunStatus, TestCase, TriggeredBy
 from app.observability import current_trace_context
 from app.schemas import (
     CompareBucket,
@@ -17,6 +22,7 @@ from app.schemas import (
     GateRequest,
     GateResult,
     GateVerdict,
+    IngestRequest,
     PromptParams,
     PromptVersionCreate,
     RunCreate,
@@ -26,6 +32,68 @@ from app.schemas import (
 from app.services import analysis
 from app.services.core import ProjectService, PromptService, Service
 from app.services.security import Principal
+
+# The placeholder version that ingested runs hang off. Both fields must match to count as
+# external, so a user cannot make a real version look like one by naming its model "external".
+EXTERNAL_MODEL = "external"
+EXTERNAL_TEMPLATE = "(results computed outside EvalOps and recorded through POST /gate/ingest)"
+MAX_REFS_LISTED = 10
+
+
+def _is_external(version: PromptVersionRow) -> bool:
+    return version.model == EXTERNAL_MODEL and version.template == EXTERNAL_TEMPLATE
+
+
+def _listed(refs: Iterable[str]) -> str:
+    ordered = sorted(refs)
+    shown = ", ".join(ordered[:MAX_REFS_LISTED])
+    return shown + (
+        f" (+{len(ordered) - MAX_REFS_LISTED} more)" if len(ordered) > MAX_REFS_LISTED else ""
+    )
+
+
+def _cases_by_ref(cases: Sequence[TestCase]) -> dict[str, TestCase]:
+    """Index cases by `inputs.case_ref`; a case that cannot be addressed spoils the dataset."""
+    by_ref: dict[str, TestCase] = {}
+    without_ref: list[int] = []
+    shared: set[str] = set()
+    for case in cases:
+        ref = case.inputs.get("case_ref")
+        if not isinstance(ref, str) or not ref:
+            without_ref.append(case.id)
+        elif ref in by_ref:
+            shared.add(ref)
+        else:
+            by_ref[ref] = case
+    problems = []
+    if without_ref:
+        problems.append(f"test case ids without inputs.case_ref: {_listed(map(str, without_ref))}")
+    if shared:
+        problems.append(f"case_ref used by more than one test case: {_listed(shared)}")
+    if problems:
+        raise Invalid("dataset cannot take ingested results: " + "; ".join(problems))
+    return by_ref
+
+
+def _check_coverage(case_by_ref: dict[str, TestCase], sent: list[str]) -> None:
+    """The results must be exactly the dataset: a partial run would inflate the pass rate."""
+    counts = Counter(sent)
+    duplicate = {ref for ref, n in counts.items() if n > 1}
+    unknown = set(counts) - set(case_by_ref)
+    missing = set(case_by_ref) - set(counts)
+    problems = []
+    if unknown:
+        problems.append(f"unknown case_ref: {_listed(unknown)}")
+    if duplicate:
+        problems.append(f"duplicate case_ref: {_listed(duplicate)}")
+    if missing:
+        problems.append(f"missing case_ref: {_listed(missing)}")
+    if problems:
+        raise Invalid(
+            "results must cover the dataset exactly; "
+            + "; ".join(problems)
+            + ". A new question needs its case added to the dataset before its results are sent."
+        )
 
 
 def run_out(row: EvalRunRow, label: str) -> EvalRun:
@@ -266,6 +334,109 @@ class RunService(Service):
             return run
         return await self.repo.latest_succeeded_run(
             project_id, body.dataset_id, exclude_version_id=head_version_id
+        )
+
+    # --- results computed outside EvalOps --------------------------------------
+    async def ingest_gate(self, p: Principal, body: IngestRequest) -> GateResult:
+        assert p.project_id is not None, "ingest requires an API key principal"
+        project_id = p.project_id
+        await self.project_for(p, project_id)
+        dataset = await self.repo.dataset(body.dataset_id)
+        if dataset is None or dataset.project_id != project_id:
+            raise NotFound("dataset not found")
+        if len(body.results) > self.settings.max_cases_per_run:
+            raise Invalid(
+                f"{len(body.results)} results; "
+                f"MAX_CASES_PER_RUN is {self.settings.max_cases_per_run}"
+            )
+        case_by_ref = _cases_by_ref(await self.repo.cases(body.dataset_id))
+        _check_coverage(case_by_ref, [r.case_ref for r in body.results])
+
+        version = await self.repo.prompt_version_by_label(project_id, body.head_label)
+        if version is not None and not _is_external(version):
+            raise Conflict(
+                f"version {body.head_label!r} is a real prompt version; "
+                "use a different head_label for ingested results"
+            )
+        baseline = await self._resolve_ingest_baseline(project_id, body, version)
+        if version is None:
+            version = await PromptService(self.repo, self.settings).create_row(
+                project_id,
+                PromptVersionCreate(
+                    label=body.head_label, template=EXTERNAL_TEMPLATE, model=EXTERNAL_MODEL
+                ),
+            )
+
+        # A result that reports an error never counts as passed, whatever `passed` says.
+        rows = [(case_by_ref[r.case_ref].id, r, r.passed and r.error is None) for r in body.results]
+        summary = analysis.summarise(
+            [
+                analysis.CaseOutcome(
+                    passed=passed,
+                    score=r.score,
+                    latency_ms=r.latency_ms,
+                    tokens=0,
+                    cost_usd=0.0,
+                    errored=r.error is not None,
+                    scores=[],
+                )
+                for _, r, passed in rows
+            ]
+        )
+        now = datetime.now(UTC)
+        run = await self.repo.add(
+            EvalRunRow(
+                project_id=project_id,
+                prompt_version_id=version.id,
+                dataset_id=body.dataset_id,
+                status=RunStatus.succeeded,
+                triggered_by=TriggeredBy.ci,
+                git_sha=body.git_sha,
+                baseline_run_id=baseline.id if baseline else None,
+                progress_done=len(rows),
+                progress_total=len(rows),
+                summary=summary.model_dump(),
+                trace_context=current_trace_context(),
+                started_at=now,
+                finished_at=now,
+            )
+        )
+        await self.repo.add_results(
+            [
+                EvalResultRow(
+                    run_id=run.id,
+                    test_case_id=case_id,
+                    output=r.output,
+                    scores=[],
+                    score=r.score,
+                    passed=passed,
+                    latency_ms=r.latency_ms,
+                    error=r.error,
+                )
+                for case_id, r, passed in rows
+            ]
+        )
+        await self.repo.commit()
+        return await self.gate_result(p, run.id)
+
+    async def _resolve_ingest_baseline(
+        self, project_id: int, body: IngestRequest, head_version: PromptVersionRow | None
+    ) -> EvalRunRow | None:
+        """Like `_resolve_baseline`, but nothing is ever queued: there is no prompt to run."""
+        if body.baseline_run_id is not None:
+            run = await self.repo.run(body.baseline_run_id)
+            if run is None or run.project_id != project_id or run.dataset_id != body.dataset_id:
+                raise NotFound("baseline run not found on this dataset")
+            return run
+        if body.baseline_label:
+            version = await self.repo.prompt_version_by_label(project_id, body.baseline_label)
+            if version is None:
+                raise NotFound(f"baseline version {body.baseline_label!r} not found")
+            return await self.repo.latest_succeeded_run(project_id, body.dataset_id, version.id)
+        return await self.repo.latest_succeeded_run(
+            project_id,
+            body.dataset_id,
+            exclude_version_id=head_version.id if head_version else None,
         )
 
     async def gate_result(self, p: Principal, run_id: int) -> GateResult:

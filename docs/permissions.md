@@ -10,13 +10,14 @@ enforcement listed next to it.
 |---|---|---|---|
 | See own projects | all owned projects | **only its own project** (404 for others) | `Service.project_for` |
 | Create / rename / delete projects | ✅ | ❌ 403 | `Service.require_user` |
-| Create prompt versions | ✅ | only via `POST /gate` (new label, immutable) | `RunService.start_gate` |
+| Create prompt versions | ✅ | only via `POST /gate` (new label, immutable) or `POST /gate/ingest` (a `model=external` placeholder with a constant template; a label that belongs to a real version is a 409) | `RunService.start_gate`, `RunService.ingest_gate` |
 | Datasets, cases, evaluators: read | ✅ | ✅ | |
 | Datasets, cases, evaluators: write | ✅ | ❌ 403 | `require_user` |
 | Start runs | ✅ (`triggered_by=ui`) | ✅ (`agent`, or `ci` via gate); bounded by case, per-run cost and daily budget caps | `queue_run` |
+| Record a run of results computed elsewhere | ✅ (no endpoint) | ✅ via `POST /gate/ingest` into an existing dataset; no queue, no LLM call, no cost, so the case, per-run cost and daily budget caps do not apply. The guards are the case-count cap, `output` ≤ 5000 chars, the request body limit and rate limiting | `RunService.ingest_gate`, `BodySizeLimitMiddleware` |
 | Compare, results, summaries | ✅ | ✅ | |
 | Gate policy: read / write | ✅ / ✅ | ✅ / ❌ | `put_policy` |
-| `POST /gate`, `GET /gate/{id}` | ❌ (API key only) | ✅ | `get_api_key_principal` |
+| `POST /gate`, `POST /gate/ingest`, `GET /gate/{id}` | ❌ (API key only) | ✅ | `get_api_key_principal` |
 | Create / list / revoke API keys | ✅ | ❌ (a key cannot mint keys) | `require_user` |
 
 Keys are 256-bit random, stored hashed (SHA-256), shown once, revocable, and record

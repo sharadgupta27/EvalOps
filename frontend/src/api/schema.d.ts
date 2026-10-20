@@ -379,6 +379,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gate/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * CI entry point for results computed elsewhere. Records a finished run and returns its verdict.
+         * @description For systems that run their own evaluation (for example a RAG pipeline) and want EvalOps to
+         *     keep the history and gate on it. Authenticated with a project API key.
+         *
+         *     Each `results[].case_ref` is matched to the dataset test case whose `inputs.case_ref` is equal.
+         *     The results must cover the dataset exactly: unknown, duplicate and missing refs are all listed
+         *     in the 422 `detail`, as are dataset cases that have no `inputs.case_ref` or share one. Adding a
+         *     question to the external system therefore requires adding its case to the dataset first. This
+         *     endpoint never creates or changes datasets or cases.
+         *
+         *     A prompt version labelled `head_label` is created as a placeholder (`model` is `external`) and
+         *     reused by later calls with the same label; a label that belongs to a real prompt version is a
+         *     409. Every call records a new run (triggered_by `ci`, status `succeeded`), so retrying a
+         *     request adds a run. Nothing is generated or judged: tokens and cost are stored as 0, so the
+         *     cost check is always skipped, and per-evaluator `scores` of the stored results are empty.
+         *
+         *     Baseline: `baseline_run_id` (404 unless it is a run on this dataset), else the latest succeeded
+         *     run of `baseline_label` (404 if no version has that label; a known label with no succeeded run
+         *     skips the regression and cost checks), else the latest succeeded run on the dataset other than
+         *     this label's. Unlike `/gate`, no baseline run is ever queued. Pass `baseline_label: main` to
+         *     compare against the main branch rather than whatever ran last.
+         *
+         *     The verdict is final and never `pending`; the run can also be read through `GET /gate/{run_id}`.
+         */
+        post: operations["ingestGateRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gate/{run_id}": {
         parameters: {
             query?: never;
@@ -724,6 +765,26 @@ export interface components {
             baseline_label?: string | null;
             baseline_run_id?: number | null;
             git_sha?: string | null;
+        };
+        IngestCaseResult: {
+            /** @description Matches the dataset case whose `inputs.case_ref` is equal */
+            case_ref: string;
+            output?: string | null;
+            /** @description Authoritative for the pass rate and for regressions */
+            passed: boolean;
+            score: number;
+            /** @default 0 */
+            latency_ms: number;
+            error?: string | null;
+        };
+        IngestRequest: {
+            dataset_id: number;
+            head_label: string;
+            baseline_label?: string | null;
+            baseline_run_id?: number | null;
+            git_sha?: string | null;
+            /** @description One entry per dataset case. At most MAX_CASES_PER_RUN (200 by default). */
+            results: components["schemas"]["IngestCaseResult"][];
         };
         /** @enum {string} */
         GateVerdict: "pending" | "pass" | "fail";
@@ -1601,6 +1662,35 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationFailed"];
+        };
+    };
+    ingestGateRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IngestRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateResult"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            413: components["responses"]["TooLarge"];
             422: components["responses"]["ValidationFailed"];
         };
     };

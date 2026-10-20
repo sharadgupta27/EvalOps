@@ -588,6 +588,53 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
 
+  /gate/ingest:
+    post:
+      tags: [gate]
+      operationId: ingestGateRun
+      summary: CI entry point for results computed elsewhere. Records a finished run and returns its verdict.
+      description: |
+        For systems that run their own evaluation (for example a RAG pipeline) and want EvalOps to
+        keep the history and gate on it. Authenticated with a project API key.
+
+        Each `results[].case_ref` is matched to the dataset test case whose `inputs.case_ref` is equal.
+        The results must cover the dataset exactly: unknown, duplicate and missing refs are all listed
+        in the 422 `detail`, as are dataset cases that have no `inputs.case_ref` or share one. Adding a
+        question to the external system therefore requires adding its case to the dataset first. This
+        endpoint never creates or changes datasets or cases.
+
+        A prompt version labelled `head_label` is created as a placeholder (`model` is `external`) and
+        reused by later calls with the same label; a label that belongs to a real prompt version is a
+        409. Every call records a new run (triggered_by `ci`, status `succeeded`), so retrying a
+        request adds a run. Nothing is generated or judged: tokens and cost are stored as 0, so the
+        cost check is always skipped, and per-evaluator `scores` of the stored results are empty.
+
+        Baseline: `baseline_run_id` (404 unless it is a run on this dataset), else the latest succeeded
+        run of `baseline_label` (404 if no version has that label; a known label with no succeeded run
+        skips the regression and cost checks), else the latest succeeded run on the dataset other than
+        this label's. Unlike `/gate`, no baseline run is ever queued. Pass `baseline_label: main` to
+        compare against the main branch rather than whatever ran last.
+
+        The verdict is final and never `pending`; the run can also be read through `GET /gate/{run_id}`.
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IngestRequest' }
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GateResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
   /gate/{run_id}:
     parameters:
       - $ref: '#/components/parameters/RunId'
@@ -1113,6 +1160,39 @@ components:
         baseline_label: { type: [string, 'null'] }
         baseline_run_id: { type: [integer, 'null'] }
         git_sha: { type: [string, 'null'], maxLength: 64 }
+
+    IngestCaseResult:
+      type: object
+      required: [case_ref, passed, score]
+      properties:
+        case_ref:
+          description: Matches the dataset case whose `inputs.case_ref` is equal
+          type: string
+          minLength: 1
+          maxLength: 200
+        output: { type: [string, 'null'], maxLength: 5000 }
+        passed:
+          description: Decides the pass rate and regressions. A result that also carries an `error` is stored as not passed.
+          type: boolean
+        score: { type: number, minimum: 0, maximum: 1 }
+        latency_ms: { type: number, minimum: 0, default: 0 }
+        error: { type: [string, 'null'], maxLength: 2000 }
+
+    IngestRequest:
+      type: object
+      required: [dataset_id, head_label, results]
+      properties:
+        dataset_id: { type: integer }
+        head_label: { type: string, minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9._-]+$' }
+        baseline_label: { type: [string, 'null'], minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9._-]+$' }
+        baseline_run_id: { type: [integer, 'null'] }
+        git_sha: { type: [string, 'null'], maxLength: 64 }
+        results:
+          description: One entry per dataset case. At most MAX_CASES_PER_RUN (200 by default).
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { $ref: '#/components/schemas/IngestCaseResult' }
 
     GateVerdict:
       type: string

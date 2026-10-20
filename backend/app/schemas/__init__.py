@@ -283,6 +283,25 @@ class GateRequest(BaseModel):
     git_sha: str | None = Field(default=None, max_length=64)
 
 
+class IngestCaseResult(BaseModel):
+    case_ref: str = Field(min_length=1, max_length=200)
+    output: str | None = Field(default=None, max_length=5000)
+    passed: bool
+    score: float = Field(ge=0, le=1)
+    latency_ms: float = Field(default=0, ge=0)
+    error: str | None = Field(default=None, max_length=2000)
+
+
+class IngestRequest(BaseModel):
+    dataset_id: int
+    head_label: Label
+    baseline_label: Label | None = None
+    baseline_run_id: int | None = None
+    git_sha: str | None = Field(default=None, max_length=64)
+    # 200 is the default MAX_CASES_PER_RUN; the service enforces the configured value.
+    results: list[IngestCaseResult] = Field(min_length=1, max_length=200)
+
+
 class GateVerdict(enum.StrEnum):
     pending = "pending"
     passed = "pass"

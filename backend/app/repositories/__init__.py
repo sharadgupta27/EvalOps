@@ -239,5 +239,9 @@ class Repo:
         )
         return [(r, c) for r, c in (await self.s.execute(q)).all()]
 
+    async def add_results(self, results: list[EvalResult]) -> None:
+        self.s.add_all(results)
+        await self.s.flush()
+
     async def delete_results(self, run_id: int) -> None:
         await self.s.execute(delete(EvalResult).where(EvalResult.run_id == run_id))

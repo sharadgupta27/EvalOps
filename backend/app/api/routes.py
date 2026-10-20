@@ -23,6 +23,7 @@ from app.schemas import (
     GateRequest,
     GateResult,
     ImportResult,
+    IngestRequest,
     LoginRequest,
     Project,
     ProjectCreate,
@@ -364,6 +365,19 @@ async def start_gate(
     body: GateRequest, p: ApiKeyPrincipalDep, repo: RepoDep, settings: SettingsDep
 ) -> GateResult:
     return await RunService(repo, settings).start_gate(p, body)
+
+
+@router.post(
+    "/gate/ingest",
+    status_code=201,
+    tags=["gate"],
+    operation_id="ingestGateRun",
+    responses={409: {"model": Error}, 413: {"model": Error}},
+)
+async def ingest_gate_run(
+    body: IngestRequest, p: ApiKeyPrincipalDep, repo: RepoDep, settings: SettingsDep
+) -> GateResult:
+    return await RunService(repo, settings).ingest_gate(p, body)
 
 
 @router.get("/gate/{run_id}", tags=["gate"], operation_id="getGateResult")
