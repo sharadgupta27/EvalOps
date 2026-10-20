@@ -58,7 +58,7 @@ Teams ship prompts and RAG pipelines the way people shipped code before unit tes
                          └─────────────────────┘
 ```
 
-**Key design decisions**
+### Key design decisions
 
 | Decision | Choice | Why |
 |---|---|---|
@@ -176,6 +176,7 @@ Each phase ends with a commit, a `docs/ai-workflow.md` entry and a Substack chap
 Effort estimates assume part-time work (about 10 h/week).
 
 ### Phase 0: Spec & Agent Context (≈ 0.5 week)
+
 - [x] `git init`, `.gitignore`, `.editorconfig`, MIT license
 - [x] `product-spec.md`: personas, user stories, acceptance criteria
 - [x] Break the spec into a backlog (GitHub Issues or `docs/backlog.md`)
@@ -186,6 +187,7 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 1, 2 · **Guide chapter:** *"From vague idea to spec: AI-native project kickoff"*. Concepts: specs as prompts, context files, backlog slicing.
 
 ### Phase 1: API Contract & Frontend Prototype (≈ 1 week)
+
 - [x] Write `openapi.yaml` from the user stories (contract first)
 - [x] Lint the contract with Spectral in CI
 - [x] Scaffold Vite + React + TS, and generate the client into `frontend/src/api/`
@@ -197,6 +199,7 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 4, 5 · **Guide chapter:** *"Contract-first development: why OpenAPI keeps AI-generated code honest"*.
 
 ### Phase 2: Backend Core (≈ 1.5 weeks)
+
 - [x] FastAPI app factory, settings via `pydantic-settings`, layered `api → services → repositories`
 - [x] SQLAlchemy models plus the first Alembic migration
 - [x] Auth (JWT) and project API keys (hashed, shown once)
@@ -209,17 +212,19 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 6, 7 · **Guide chapter:** *"Building a FastAPI backend from a contract with a coding agent"*.
 
 ### Phase 3: Eval Engine & Worker (≈ 1.5 weeks)
+
 - [x] `LLMProvider` protocol, with `AnthropicProvider` (retries, timeouts, token/cost capture) and `FakeProvider` (deterministic)
 - [x] Evaluator plugins: `exact_match`, `contains`, `regex`, `json_schema`, `llm_judge` (rubric prompt that returns structured JSON: `{score: 1-5, reasoning}`)
 - [x] Worker: claims jobs with `SKIP LOCKED`, runs cases with bounded concurrency, writes results, updates the run summary
 - [x] Run-level summary: pass rate, mean score per evaluator, p50/p95 latency, tokens, cost
 - [x] Cost guardrails: max cases per run, max spend per run and a daily budget per project (configurable)
-- [ ] Judge calibration: a small human-labelled set and agreement % reported in the README _(status: set + script done; labels AI-drafted, need human review; real-model agreement not yet measured)_
+- [ ] Judge calibration: a small human-labelled set and agreement % reported in the README *(status: set + script done; labels AI-drafted, need human review; real-model agreement not yet measured)*
 
 **Done when:** a 30-case run finishes end to end and the UI shows live progress.
 **Rubric:** 6 · **Guide chapter:** *"How to evaluate LLM output: deterministic checks vs LLM-as-judge (and why judges need judging)"*.
 
 ### Phase 4: Compare, Regressions & CI Gate (≈ 1 week)
+
 - [x] Compare service: per-case delta, regressed / improved / unchanged buckets
 - [x] Compare UI with filters and a side-by-side output diff
 - [x] Gate policy and the `POST /gate` endpoint
@@ -229,6 +234,7 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 11 · **Guide chapter:** *"Unit tests for prompts: gating pull requests on LLM quality"*.
 
 ### Phase 5: Testing Depth (≈ 1 week)
+
 - [x] `backend/tests/unit/` vs `backend/tests/integration/` (testcontainers Postgres), with separate pytest markers and commands
 - [x] Integration tests for the key workflows: import → run → compare → gate
 - [x] Playwright E2E for the happy path from section 1 (using FakeProvider)
@@ -237,17 +243,19 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 4, 6, 9 · **Guide chapter:** *"A testing pyramid for AI apps: what to mock and what never to mock"*.
 
 ### Phase 6: Containerize, Deploy, CI/CD (≈ 1 week)
+
 - [x] Multi-stage Dockerfiles (backend image runs as `api` or `worker` via command)
 - [x] `docker-compose.yml` (dev) and `docker-compose.prod.yml`; `docker compose up` gives a working system
 - [x] Seed script with a demo project and dataset
 - [x] `ci.yml`: lint, type-check, unit and integration tests, Playwright, image build
-- [ ] `deploy.yml`: on `main` with green tests, push to GHCR, SSH deploy to EC2, run migrations, health check _(status: workflow ready; needs AWS resources + `DEPLOY_ENABLED=true` (docs/deployment.md))_
-- [ ] Public demo: FakeProvider by default, plus a rate-limited real-model mode _(status: FakeProvider default + rate limit + spend caps done; public URL pending)_
+- [ ] `deploy.yml`: on `main` with green tests, push to GHCR, SSH deploy to EC2, run migrations, health check *(status: workflow ready; needs AWS resources + `DEPLOY_ENABLED=true` (docs/deployment.md))*
+- [ ] Public demo: FakeProvider by default, plus a rate-limited real-model mode *(status: FakeProvider default + rate limit + spend caps done; public URL pending)*
 
 **Done when:** a merged PR is live on the public URL without manual steps.
 **Rubric:** 8, 10, 11, 14 · **Guide chapter:** *"Shipping it: Docker Compose, GitHub Actions and AWS for a solo AI engineer"*.
 
 ### Phase 7: Observability (≈ 0.5 week)
+
 - [x] OpenTelemetry tracing across api → worker → LLM call (span attributes: model, tokens, cost); one trace per run via `traceparent` stored on the job row
 - [x] Grafana dashboard: run throughput, LLM latency, error rate, spend per day
 - [x] Logs in Loki: Alloy ships the api/worker JSON logs; Grafana links log lines ⇄ traces by `trace_id`
@@ -274,8 +282,9 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 12 · **Guide chapters:** *"Skills vs subagents vs MCP vs hooks: a mental model"* and *"Building an MCP server for your own app"*.
 
 ### Phase 9: Security, Audit & Hardening (≈ 0.5 week)
+
 - [x] Deterministic scans in CI: gitleaks, Semgrep, Trivy (images), pip-audit, npm audit; save outputs in `security/`
-- [ ] AI PR audit: an agent reviews a real PR, and you save the output plus your accept/reject notes _(status: audit done in security/pr-audit.md; author still to fill reviewer notes)_
+- [ ] AI PR audit: an agent reviews a real PR, and you save the output plus your accept/reject notes *(status: audit done in security/pr-audit.md; author still to fill reviewer notes)*
 - [x] Agent and extension threat notes: prompt injection via test-case data into the judge, MCP key scoping, hook bypass
 - [x] `security/ai-data-policy.md`: what data may be sent to which LLM, retention, secrets handling
 - [x] App hardening: rate limits, upload size limits, a strict CORS allowlist, hashed API keys
@@ -283,10 +292,11 @@ Effort estimates assume part-time work (about 10 h/week).
 **Rubric:** 13 · **Guide chapter:** *"Threat-modeling an AI app (including your own coding agents)"*.
 
 ### Phase 10: Docs, Demo & Launch (≈ 0.5 week)
-- [ ] README: problem, screenshots, architecture diagram, live URL, numbers (judge agreement %, test count, coverage) _(status: live URL pending deploy)_
-- [ ] 2-minute demo video _(status: script in docs/demo.md)_
-- [ ] Polish and publish the Substack series; link the repo _(status: drafts in substack/)_
-- [ ] Resume bullets and a LinkedIn post
+
+- [ ] README: problem, screenshots, architecture diagram, live URL, numbers (judge agreement %, test count, coverage) *(status: live URL pending deploy)*
+- [ ] 2-minute demo video *(status: script in docs/demo.md)*
+- [ ] Polish and publish the Substack series; link the repo *(status: drafts in substack/)*
+- [x] Resume bullets and a LinkedIn post *(drafts in [docs/launch-kit.md](docs/launch-kit.md); fill in the Substack and live URLs, then post)*
 
 **Rubric:** 1, 3, 14
 
@@ -324,6 +334,7 @@ Effort estimates assume part-time work (about 10 h/week).
 | Prompt injection via test-case data | Delimit untrusted input in judge prompts, never give the judge tools |
 
 ## 10. Stretch Goals
+
 - Embedding similarity evaluator (pgvector)
 - RAG-specific metrics: faithfulness, context recall
 - Multiple providers (OpenAI, local Ollama) behind `LLMProvider`

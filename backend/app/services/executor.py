@@ -66,6 +66,8 @@ async def evaluate_case(
             )
         except LLMError as e:
             result.error = f"generation failed: {e}"
+            # Runbook llm-errors greps for this. LLMError holds a reason, never the prompt.
+            log.warning(result.error, extra={"case_id": case.id})
             result.latency_ms = (time.perf_counter() - started) * 1000
             return result
         result.output = completion.text

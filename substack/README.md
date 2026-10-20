@@ -4,6 +4,7 @@ The build guide for EvalOps, one post per phase. Start with
 [00-series-index.md](00-series-index.md).
 
 Publishing notes:
+
 - Relative links (`../docs/...`, `../backend/...`) must be replaced with GitHub URLs once
   the repository is public, e.g. `https://github.com/<user>/evalops/blob/main/docs/...`.
 - Images are in `docs/screenshots/`; upload them to Substack rather than hot-linking.

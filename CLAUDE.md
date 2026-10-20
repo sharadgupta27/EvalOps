@@ -103,12 +103,14 @@ The dev machine runs Windows with PowerShell. Prefer commands that work cross-pl
 ## Coding Conventions
 
 **Python:**
+
 - 3.12, full type hints, `ruff` for lint and format, `mypy` clean.
 - Pydantic v2 and SQLAlchemy 2.0 style (`Mapped[...]`, `select()`).
 - Async endpoints.
 - Raise domain exceptions in services; map them to HTTP errors in one exception handler.
 
 **TypeScript:**
+
 - `strict` mode, function components and hooks, ESLint + Prettier.
 - Tailwind 4 for styling (CSS-first config in `src/index.css`, no `tailwind.config.js`).
 - No `any` unless justified in a comment.

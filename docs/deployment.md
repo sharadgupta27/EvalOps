@@ -14,12 +14,15 @@ after CI passes on `main`.
 2. **EC2:** Ubuntu 24.04, t3.small, 20 GB gp3. Security group inbound: 22 (your IP only),
    80, 443. Attach the Elastic IP.
 3. **Install Docker** on the instance:
+
    ```bash
    curl -fsSL https://get.docker.com | sh
    sudo usermod -aG docker ubuntu && newgrp docker
    sudo mkdir -p /opt/evalops/deploy && sudo chown -R ubuntu /opt/evalops
    ```
+
 4. **Server secrets**: `/opt/evalops/.env`, `chmod 600`:
+
    ```bash
    ENVIRONMENT=prod
    DOMAIN=evalops.example.com
@@ -32,6 +35,7 @@ after CI passes on `main`.
    RATE_LIMIT_PER_MINUTE=60
    DEMO_PASSWORD=<public demo password>
    ```
+
 5. **GHCR access**: make the two packages public after the first push, or `docker login ghcr.io` on the server with a read-only token.
 6. **GitHub settings**: environment `production` with secrets `EC2_HOST`, `EC2_USER`
    (`ubuntu`), `EC2_SSH_KEY` (a deploy key added to `~/.ssh/authorized_keys`), and repository
@@ -53,6 +57,7 @@ Seed the public demo once: `docker compose -f docker-compose.prod.yml run --rm a
 cd /opt/evalops
 IMAGE_TAG=<previous-sha> docker compose -f docker-compose.prod.yml up -d --wait
 ```
+
 Migrations are additive; if one must be reverted: `docker compose ... run --rm api alembic downgrade -1`.
 
 ## Proof of deployment

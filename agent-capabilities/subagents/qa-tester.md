@@ -32,7 +32,7 @@ code to make a test pass: report the bug instead.
 
 ## Report
 
-```
+```text
 COVERAGE OF THIS CHANGE: <behaviours → test names>
 ADDED: <files and test names>
 RESULTS: <pass/fail counts, failures with the first error line>

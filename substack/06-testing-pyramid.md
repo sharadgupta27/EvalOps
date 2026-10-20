@@ -87,6 +87,7 @@ One journey, about 8 seconds. E2E tests are expensive to maintain, so write few,
 the ones you'd demo to a customer.
 
 Two locator lessons from writing it:
+
 - `getByRole("heading", { name: "Projects" })` also matched "Your projects" (Playwright matches
   substrings by default). Use `exact: true`.
 - Assert on accessible names (`Delete mentions-topic` button) rather than raw text inside

@@ -36,6 +36,7 @@ deps/schema/CI), `product-spec.md` (acceptance criteria), `openapi.yaml` (contra
 Each entry: goal · prompt or delegation · what the AI produced · what was reviewed or changed · verification.
 
 ### 2026-10-14 · Phases 0–1: spec, agent context, contract, frontend
+
 - **Prompt:** "Implement the EvalOps project using plan.md and follow CLAUDE.md … develop an
   agent extension pack … generate a step-by-step guide for Substack."
 - **Produced:** `product-spec.md`, `AGENTS.md` (CLAUDE.md now imports it), backlog,
@@ -47,6 +48,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 - **Verified:** Spectral 0 errors; `tsc` strict, ESLint, 26 Vitest tests; production build.
 
 ### 2026-10-14 · Phase 2: backend core
+
 - **Produced:** FastAPI factory, settings, async SQLAlchemy models, Alembic migration 0001,
   JWT auth, hashed project API keys, CRUD, CSV/JSONL import with per-row errors, contract test.
 - **Issues found by running things:** method named `list` shadowed the builtin inside class
@@ -57,6 +59,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 - **Verified:** contract test green; migration upgrade/downgrade on SQLite and Postgres.
 
 ### 2026-10-14 · Phase 3: eval engine and worker
+
 - **Delegation:** the agent loaded the `claude-api` skill before writing the provider to get
   current model ids, pricing, structured outputs and error classes rather than recalling them.
 - **Produced:** `LLMProvider`, `AnthropicProvider` (SDK retries/timeouts, structured JSON for
@@ -69,6 +72,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 - **Verified:** 77 unit tests; 3 Postgres integration tests including concurrent claimers.
 
 ### 2026-10-14 · Phases 4–6: compare, gate, containers, CI/CD
+
 - **Produced:** compare service and UI, gate policy and `/gate`, `scripts/evalops_gate.py`,
   Dockerfiles, dev/prod compose, Caddy, seed script, `ci.yml`, `deploy.yml`, `eval-gate.yml`.
 - **Bugs found in integration:** nginx cached the API container's IP and returned 502 after
@@ -78,6 +82,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   client: good prompt exit 0, terse prompt exit 1 with 30 regressions; Playwright E2E green.
 
 ### 2026-10-14 · Phase 7: observability
+
 - **Produced:** metrics, OTel traces (`run.execute`, `case.evaluate`, `llm.complete` with
   model/token/cost attributes), collector + Tempo + Prometheus + Grafana, dashboard, alerts.
 - **Finding during the drill design:** queue-age metric disappeared with the worker, so the
@@ -88,6 +93,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   Verified live: trace `4bf92f…` holds the API request, `run.execute`, 30 `case.evaluate`, 60 `llm.complete`.
 
 ### 2026-10-14 · Phase 8: agent extension pack
+
 - **Produced:** 3 skills, 3 subagents, MCP server (7 tools, resource, prompt), 3 hooks + audit
   log + contract-approval flow, plugin + marketplace, custom triage agent, permissions doc.
 - **API drift caught by running code:** `mcp` 2.x renamed `FastMCP` to `MCPServer`; the
@@ -97,6 +103,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 - **Not verified here:** the Claude path of the triage agent (no API key in this environment).
 
 ### 2026-10-14 · Phase 9: security
+
 - **Produced:** real scan outputs, AI audit with decisions, threat model, data policy.
 - **Fixed from findings:** rate-limit bypass via rotating fake API keys; upload parsed before
   size check; frontend image CVEs (41 → 0); react-router CVEs (v7); Vitest critical (v5);
@@ -106,6 +113,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   follow-ups below.)
 
 ### 2026-10-14 · Follow-ups after launch
+
 - **Daily budget (T7):** `MAX_DAILY_COST_USD` per project per UTC day, checked when a run is
   queued (422), when the worker claims it (fails without calling the model) and after each
   case. Closes the "no daily budget" residual risk. Test:
@@ -121,6 +129,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   Slack locally. Drill re-run: one page, the symptom alert suppressed, one "resolved".
 
 ### 2026-10-20 · Phase 8: parallel worktree demo, backend half (`limit` on list runs)
+
 - **Delegation:** the orchestrator session split the feature into two tasks and handed this
   one to a subagent working only in the git worktree `../evalops-backend` (branch
   `feat/runs-pagination`), while a second subagent did the frontend half in
@@ -137,6 +146,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   typecheck green.
 
 ### 2026-10-20 · Phase 8: parallel worktrees, frontend half (Compare CSV export)
+
 - **Delegation:** the orchestrator session split one feature across two git worktrees and
   handed this half to a subagent in `../evalops-frontend` (branch `feat/compare-export`);
   the backend half ran in parallel in `../evalops-backend`. Brief: frontend only, no
@@ -153,6 +163,7 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   `typecheck` and `prettier --check .` all green.
 
 ### 2026-10-20 · Plan audit: closing the last two code gaps
+
 - **Goal:** the human asked whether anything in `plan.md` was missing. The audit found two gaps
   the checkboxes didn't show: the parallel worktree demo was documented but never run, and
   Loki was in the tech stack but not in `ops/`. The human asked to implement both.
@@ -169,8 +180,31 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
   add-on, and a 30-case run was started. Its "run finished" worker line in Loki carried a
   `trace_id` that Tempo resolved to a 96-span trace. Every LogQL query in the runbook was
   run against Loki. The first attempt surfaced the replayed-history 400s, which led to the drop stage.
-- **Found on the way:** the runbook's `grep "generation failed"` step never matches, because
-  that text is stored on the result row and never logged. It is left as is for a separate fix.
+- **Found on the way:** the runbook's `grep "generation failed"` step never matched, because
+  that text was stored on the result row but never logged. Fixed in the next entry.
+
+### 2026-10-20 · Remaining plan items and a clean Problems panel
+
+- **Goal:** the human asked to finish what was left in `plan.md` and remove all errors.
+- **Produced:**
+  - `.markdownlint-cli2.jsonc` (read by the CLI and the VS Code extension). Line length and
+    table pipe spacing are off; they are style only and the repo wraps prose by hand. Skills
+    may use their front-matter `name` as the title. Vendored and cache folders, and the judge
+    prompt, are ignored (editing the prompt would change the judge).
+  - Auto-fixed the rest: blank lines around lists, headings and fences; bare URLs; code-fence
+    languages in the subagents, synced to `.claude/` and the plugin with `agent-hooks/install.py`.
+  - A real rendering bug: `` `fake|anthropic` `` split an architecture table row into four cells.
+  - Runbook bug: the worker now logs `generation failed: <reason>` (a warning with `case_id`),
+    so the `llm-errors` grep works. There is a regression test, and it also checks the
+    prompt text never reaches the log.
+  - Resume bullets and a LinkedIn post in `docs/launch-kit.md`; README test counts refreshed.
+- **Not done, needs the human:** a human review of the calibration labels and a real-model
+  agreement run (no `ANTHROPIC_API_KEY` in this environment); AWS resources and the first
+  deploy (no AWS CLI or credentials, and deploys need explicit approval); filling in the
+  reviewer notes in `security/pr-audit.md`; the demo video; publishing the Substack series.
+- **Verified:** markdownlint reports 0 issues in 56 files. The backend has 81 unit and 3
+  integration tests passing at 90% coverage, with ruff and mypy clean. The agent-pack
+  `install.py --check` reports no stale copies.
 
 ## Prompts that worked well
 

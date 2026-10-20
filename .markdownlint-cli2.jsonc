@@ -1,0 +1,27 @@
+// markdownlint settings for the repo, read by `markdownlint-cli2` and the VS Code extension.
+{
+  "config": {
+    "default": true,
+    // Prose is wrapped by hand (~100 cols) or left unwrapped, and tables/commands run long.
+    "MD013": false,
+    // Tables use `|---|` delimiter rows with spaced cells; padding them adds noise to diffs.
+    "MD060": false,
+    // Skills and subagents start with YAML front matter whose `name` acts as the title.
+    "MD041": { "front_matter_title": "^\\s*(title|name)\\s*[:=]" },
+    // Same subheadings (e.g. "Verified") under different parents are fine.
+    "MD024": { "siblings_only": true },
+    "MD033": { "allowed_elements": ["img", "details", "summary", "br", "kbd", "sub", "sup", "p", "a"] }
+  },
+  "ignores": [
+    // LLM prompts are model input, not docs; changing them changes the judge (eval-gate.yml).
+    "backend/app/evaluators/prompts/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/.pytest_cache/**",
+    "**/.mypy_cache/**",
+    "**/.ruff_cache/**",
+    "frontend/coverage/**",
+    "e2e/test-results/**",
+    "e2e/playwright-report/**"
+  ]
+}

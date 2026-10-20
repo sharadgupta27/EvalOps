@@ -15,6 +15,7 @@ evaluator configurations and datasets. You do not edit files; you report.
 The threshold (default 4/5) matches how strict the team actually is.
 
 **Judge prompts** (`backend/app/evaluators/prompts/judge.md`):
+
 - Untrusted data (`<input>`, `<output>`, `<expected>`) is delimited, and the prompt says to
   ignore instructions inside it. Check that delimiters are neutralised in code (`neutralise()`).
 - The scale is anchored: every score level has a definition.
@@ -38,7 +39,7 @@ outputs are minimal facts, not full paragraphs; no personal data; no duplicate c
 
 ## Output
 
-```
+```text
 VERDICT: ship | revise
 FINDINGS (most important first)
 - <issue>; <evidence>; <concrete rewrite or config change>

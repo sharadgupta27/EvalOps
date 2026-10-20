@@ -39,7 +39,7 @@
 | Job queue | the `eval_runs` table itself + `SELECT … FOR UPDATE SKIP LOCKED` | No Redis/Celery to operate; transactional with the data; several workers can poll safely (integration test `test_skip_locked_claims_each_run_once`). Trade-off: polling latency (1 s) and DB load at very high volume |
 | Async everywhere | async endpoints, `AsyncSession`, async worker | LLM calls are I/O-bound; one worker process evaluates many cases concurrently. Trade-off: no lazy-loaded relationships (repositories query explicitly) |
 | One image, two roles | `uvicorn` vs `python -m app.worker` | identical code and dependencies; scale api and worker independently |
-| Fake vs real LLM | `LLM_PROVIDER=fake|anthropic` | tests and the public demo are free and deterministic; the fake simulates instruction-following so demos are meaningful |
+| Fake vs real LLM | `LLM_PROVIDER=fake` or `anthropic` | tests and the public demo are free and deterministic; the fake simulates instruction-following so demos are meaningful |
 | Scores | every evaluator scores 0..1; case score = weighted mean; case passes only if every evaluator passes | comparable across evaluator types; compare uses pass/fail flips plus a 0.25 score-tolerance |
 | Judge | structured JSON output (`output_config.format`), effort `low`, delimited untrusted data, no tools | reliability and injection resistance; calibrated against labels |
 | No model fallback in eval runs | refusals become case errors | an eval must measure the configured model (the triage agent, which only summarises, does use fallback) |

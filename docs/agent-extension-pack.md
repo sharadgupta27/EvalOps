@@ -58,6 +58,7 @@ hooks can call them.
 ## The components in detail
 
 ### Skills
+
 - **add-eval-case**: bug report → 1–3 sanitized cases → prove they fail on the current prompt.
 - **review-api-change**: contract-first checklist; delegates review to `api-contract-reviewer`;
   records approval with `approve_contract_change.py`, which unlocks `openapi.yaml` for 2 hours
@@ -65,16 +66,19 @@ hooks can call them.
 - **debug-ci-failure**: maps every CI job to a local command; forbids weakening tests or gates.
 
 ### Subagents
+
 Each has a narrow `tools:` list. Reviewers cannot edit; the QA agent may only touch tests.
 Running them in their own context keeps long diffs and logs out of the main session.
 
 ### MCP server
+
 Tools: `list_projects`, `list_prompt_versions`, `list_runs`, `start_run`, `get_run_summary`,
 `compare_runs`, `get_regressions` · resource `evalops://runs/{run_id}` · prompt
 `triage-regression`. Tested in-process (`mcp-server/test_server.py`, 7 tests) and over real
 stdio against the running stack (`mcp-server/scripts/smoke.py`).
 
 ### Hooks
+
 | Event | Script | Effect |
 |---|---|---|
 | PreToolUse (Read/Edit/Write/Bash) | `guard.py` | blocks secrets, committed migrations, generated client, unreviewed `openapi.yaml`, destructive commands; logs every decision |
@@ -84,6 +88,7 @@ stdio against the running stack (`mcp-server/scripts/smoke.py`).
 Tested with 9 subprocess tests against a throwaway git repo (`agent-hooks/tests/`).
 
 ### Custom agent
+
 Plain-code pipeline (start run → wait → compare → triage → issue) with one LLM call for
 the judgement step. Why not an interactive agent: it is unattended, repetitive and must be
 cheap and auditable. Works without an Anthropic key (deterministic report).

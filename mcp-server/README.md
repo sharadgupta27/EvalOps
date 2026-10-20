@@ -24,12 +24,14 @@ Environment: `EVALOPS_URL` (default `http://localhost:5173`) and `EVALOPS_API_KE
 project key from *Gate & API keys*).
 
 **Claude Code**: already registered in the repo's [.mcp.json](../.mcp.json):
+
 ```json
 { "mcpServers": { "evalops": { "command": "uv", "args": ["run", "--project", "mcp-server", "--quiet", "python", "mcp-server/server.py"],
   "env": { "EVALOPS_URL": "${EVALOPS_URL:-http://localhost:5173}", "EVALOPS_API_KEY": "${EVALOPS_API_KEY}" } } } }
 ```
 
 **Codex** (`~/.codex/config.toml`):
+
 ```toml
 [mcp_servers.evalops]
 command = "uv"

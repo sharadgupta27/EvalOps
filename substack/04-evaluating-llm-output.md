@@ -76,6 +76,7 @@ EvalOps defends in layers:
    _, prompt = render_judge_prompt("Is it polite?", CASE, attack)
    assert prompt.count("</output>") == 1   # only our own closing tag survives
    ```
+
 3. The judge has **no tools**. Worst case it gives a wrong score; it can't *do* anything.
 4. Deterministic evaluators run alongside, so they can't be talked out of their result.
 

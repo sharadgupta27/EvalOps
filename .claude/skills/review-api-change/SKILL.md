@@ -12,6 +12,7 @@ edits to `openapi.yaml` until this review has been done.
 ## 1. Plan the change (no edits yet)
 
 Write down, in 2–5 bullets:
+
 - Which user story in `product-spec.md` needs it.
 - Path, method, operationId, request schema, response schema and status codes.
 - Who may call it: user JWT only, or also project API keys (CI/MCP)? See `docs/permissions.md`.

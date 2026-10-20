@@ -36,7 +36,7 @@ have to match (`test_contract.py`). Spectral must pass.
 
 ## Output format
 
-```
+```text
 VERDICT: approve | changes-requested
 BLOCKING
 - <file:line> <problem> → <suggested fix>

@@ -28,16 +28,16 @@ tone or a cost spike are found by users, not by CI.
    per-evaluator means, p50/p95 latency, tokens and cost, with live progress in the UI.
    Per-run case and spend caps, plus a daily budget per project.
 5. **Compare**: per-case diff between two runs (regressed / improved / unchanged), with
-   side-by-side outputs.
+   side-by-side outputs and CSV export of the filtered cases.
 6. **CI gate**: `POST /api/v1/gate` with a project API key → `pass`/`fail` plus reasons; the
    GitHub Action fails the PR when the pass rate, regression count or cost increase break the
    project's policy.
 
 ### Expected behaviour (happy path, automated by the E2E test)
 
-Sign up → create *Support reply generator* → save prompt `v1` → import 30 cases → attach
+Sign up → create _Support reply generator_ → save prompt `v1` → import 30 cases → attach
 `contains`, `json_schema` and `llm_judge` → run: **100% pass** → save a "shorter" `v2` → run:
-**0% pass** → *Compare v1 → v2*: **30 cases regressed**, outputs side by side → CI gate on
+**0% pass** → _Compare v1 → v2_: **30 cases regressed**, outputs side by side → CI gate on
 `v2`: **FAIL** (exit 1) with reasons.
 
 | Runs | Run detail |
@@ -77,15 +77,15 @@ docker compose up -d --build --wait                 # db, migrations, api :8000,
 docker compose run --rm api python -m app.seed      # demo project, 30 cases, runs for v1 and v2
 ```
 
-Open http://localhost:5173 and log in as `demo@evalops.dev` with the `DEMO_PASSWORD` from
-[.env.example](.env.example), or register your own account. API docs: http://localhost:8000/api/docs.
+Open <http://localhost:5173> and log in as `demo@evalops.dev` with the `DEMO_PASSWORD` from
+[.env.example](.env.example), or register your own account. API docs: <http://localhost:8000/api/docs>.
 
 No API key is needed: `LLM_PROVIDER=fake` is the default. To use Claude:
 `LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-... docker compose up -d` (spend is capped by
 `MAX_COST_PER_RUN_USD`, default $2 per run, and `MAX_DAILY_COST_USD`, default $20 per project per day).
 
 With observability: `docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml up -d --build`
-→ Grafana http://localhost:3000, Prometheus http://localhost:9090, Alertmanager http://localhost:9093
+→ Grafana <http://localhost:3000>, Prometheus <http://localhost:9090>, Alertmanager <http://localhost:9093>
 (delivered alerts: `docker compose -f docker-compose.yml -f ops/docker-compose.observability.yml logs alert-sink`).
 Logs: Grafana → Explore → Loki, e.g. `{service="worker"} | json | run_id="24"`; the `trace_id` field links to the run's trace in Tempo.
 
@@ -111,10 +111,10 @@ by `backend/app/config.py`.
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Backend unit (77) | `cd backend && uv run pytest -m "not integration"` | SQLite, < 30 s: pure logic, evaluators, providers, auth, every endpoint, worker, compare, gate, **contract drift** |
+| Backend unit (81) | `cd backend && uv run pytest -m "not integration"` | SQLite, < 30 s: pure logic, evaluators, providers, auth, every endpoint, worker, compare, gate, **contract drift** |
 | Backend integration (3) | `cd backend && uv run pytest -m integration` | needs Docker: Postgres 16 via testcontainers + Alembic; import → run → compare → gate; `SKIP LOCKED` with 4 concurrent workers; cascades |
 | Coverage | `cd backend && uv run pytest --cov=app` | 90% |
-| Frontend (26) | `cd frontend && npm run test` (`npm run coverage`) | formatting, compare filtering/sorting/diffing, API client auth and errors, CompareTable, LoginPage, EvaluatorsTab |
+| Frontend (33) | `cd frontend && npm run test` (`npm run coverage`) | formatting, compare filtering/sorting/diffing, CSV export, API client auth and errors, CompareTable, LoginPage, EvaluatorsTab |
 | E2E (1 journey) | `docker compose up -d --wait && docker compose run --rm api python -m app.seed && cd e2e && npm ci && npx playwright install chromium && npx playwright test` | the full happy path through the real UI and worker |
 | MCP server (7) | `cd mcp-server && uv run pytest` | tools, scoping, truncation, errors, resource, prompt |
 | Hooks (9) | `python -m unittest discover -s agent-hooks/tests` | secrets, migrations, contract approval, destructive commands, stop hook |

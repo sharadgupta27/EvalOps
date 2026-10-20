@@ -1,4 +1,5 @@
 import json
+import logging
 from types import SimpleNamespace
 from typing import Any
 
@@ -9,7 +10,9 @@ from app.llm.anthropic_provider import AnthropicProvider
 from app.llm.base import LLMError
 from app.llm.fake import FakeProvider
 from app.llm.pricing import cost_usd
+from app.models import PromptVersion, TestCase
 from app.services import security
+from app.services.executor import evaluate_case
 
 
 async def test_fake_provider_is_deterministic_and_follows_instructions() -> None:
@@ -29,6 +32,22 @@ async def test_fake_provider_scripted_error() -> None:
     fake.script("boom", error="simulated outage")
     with pytest.raises(LLMError, match="outage"):
         await fake.complete("boom", model="m", max_tokens=1)
+
+
+async def test_generation_failure_is_logged_without_the_prompt(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    fake = FakeProvider()
+    fake.script("boom", error="simulated outage")
+    case = TestCase(id=7, dataset_id=1, inputs={"q": "boom secret"}, expected_output=None)
+    version = PromptVersion(project_id=1, label="v1", template="{{q}}", model="m", params={})
+    with caplog.at_level(logging.WARNING, logger="app.services.executor"):
+        result = await evaluate_case(case, version, [], fake)
+    assert result.error == "generation failed: simulated outage"
+    [record] = [r for r in caplog.records if r.getMessage().startswith("generation failed")]
+    assert record.getMessage() == "generation failed: simulated outage"
+    assert getattr(record, "case_id", None) == 7
+    assert "secret" not in record.getMessage()
 
 
 def test_unknown_model_priced_at_most_expensive_rate() -> None:
