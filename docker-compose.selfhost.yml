@@ -1,0 +1,106 @@
+# Free self-hosting: run EvalOps on your own machine (or any always-on box) and, if CI needs to reach it, publish it
+# through a free tunnel. No cloud account, no open inbound port. Full guide: docs/free-deployment.md
+#
+#   cp .env.selfhost.example .env.selfhost        # fill in the secrets
+#   docker compose --env-file .env.selfhost -f docker-compose.selfhost.yml up -d --build
+#   docker compose --env-file .env.selfhost -f docker-compose.selfhost.yml run --rm api python -m app.seed   # optional demo data
+#
+# Reachable from the internet (pick one, both are free):
+#   --profile funnel   Tailscale Funnel: a stable https://<name>.<tailnet>.ts.net URL, no domain needed
+#   --profile tunnel   Cloudflare Tunnel: your own hostname on a domain managed by Cloudflare
+# Not needed at all when CI runs on a self-hosted GitHub runner on this machine (it can call http://localhost:8000).
+name: evalops-selfhost
+
+x-backend: &backend
+  build: ./backend
+  image: evalops-backend:selfhost
+  restart: unless-stopped
+  environment:
+    ENVIRONMENT: prod
+    DATABASE_URL: postgresql+psycopg://evalops:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.selfhost}@db:5432/evalops
+    JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.selfhost (32+ random characters)}
+    CORS_ORIGINS: '["${PUBLIC_URL:-http://localhost:5173}"]'
+    # `fake` costs nothing and sends nothing anywhere. Use `anthropic` only for data you may send to Anthropic.
+    LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    DEFAULT_MODEL: ${DEFAULT_MODEL:-claude-opus-5-5}
+    JUDGE_MODEL: ${JUDGE_MODEL:-claude-opus-5-5}
+    MAX_CASES_PER_RUN: ${MAX_CASES_PER_RUN:-200}
+    MAX_COST_PER_RUN_USD: ${MAX_COST_PER_RUN_USD:-0.50}
+    MAX_DAILY_COST_USD: ${MAX_DAILY_COST_USD:-5.0}
+    RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
+    DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evalops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.selfhost}
+      POSTGRES_DB: evalops
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evalops -d evalops"]
+      interval: 5s
+      retries: 20
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    <<: *backend
+    # Published on this machine only: a self-hosted CI runner and the CiteSure stack use it; the internet never does.
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8000}:8000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9101/metrics', timeout=2)"]
+      interval: 15s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  frontend:
+    build: ./frontend
+    image: evalops-frontend:selfhost
+    restart: unless-stopped
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-5173}:8080"]
+    depends_on:
+      api: { condition: service_healthy }
+
+  # --- optional: let GitHub Actions reach EvalOps -------------------------------------------------------------------
+  tailscale:
+    image: tailscale/tailscale:latest
+    profiles: ["funnel"]
+    restart: unless-stopped
+    hostname: ${TS_HOSTNAME:-evalops}
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-} # a reusable auth key from the Tailscale admin console
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/funnel.json
+    volumes:
+      - tsstate:/var/lib/tailscale
+      - ./deploy/tailscale-funnel.json:/config/funnel.json:ro
+    depends_on: [frontend]
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-} # Cloudflare Zero Trust > Networks > Tunnels; route the hostname to http://frontend:8080
+    depends_on: [frontend]
+
+volumes:
+  pgdata:
+  tsstate:

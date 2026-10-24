@@ -248,7 +248,7 @@ Effort estimates assume part-time work (about 10 h/week).
 - [x] `docker-compose.yml` (dev) and `docker-compose.prod.yml`; `docker compose up` gives a working system
 - [x] Seed script with a demo project and dataset
 - [x] `ci.yml`: lint, type-check, unit and integration tests, Playwright, image build
-- [ ] `deploy.yml`: on `main` with green tests, push to GHCR, SSH deploy to EC2, run migrations, health check *(status: workflow ready; needs AWS resources + `DEPLOY_ENABLED=true` (docs/deployment.md))*
+- [ ] `deploy.yml`: on `main` with green tests, push to GHCR, SSH deploy to EC2, run migrations, health check *(status: workflow ready; needs AWS resources + `DEPLOY_ENABLED=true` (docs/deployment.md); free alternative without AWS: `docker-compose.selfhost.yml` + a free tunnel, docs/free-deployment.md, built and run locally)*
 - [ ] Public demo: FakeProvider by default, plus a rate-limited real-model mode *(status: FakeProvider default + rate limit + spend caps done; public URL pending)*
 
 **Done when:** a merged PR is live on the public URL without manual steps.

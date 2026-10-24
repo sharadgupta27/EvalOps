@@ -32,6 +32,10 @@ adding a case.
 - **The triage agent** sends truncated regressed cases to Claude to write a summary and posts
   the summary to the project's private GitHub issues.
 
+## 2b. Results sent by other systems (CiteSure)
+
+`POST /gate/ingest` stores what a caller sends: per question a hash key, pass/fail, a score, a latency and a short output. No model is called for it. A caller that holds private data should send placeholders instead of text (CiteSure does with `PRIVATE_MODE=true` or `--redact`). Do not import real company questions into a project whose evaluators use `LLM_PROVIDER=anthropic`: the judge would send them to Anthropic. A self-hosted instance published through a tunnel is protected by project API keys on the gate endpoints and by the login on the UI; see `docs/free-deployment.md`.
+
 ## 3. Secrets handling
 
 - Secrets live in environment variables: `.env` locally (git-ignored), GitHub Actions secrets

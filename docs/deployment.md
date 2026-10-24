@@ -4,6 +4,8 @@ Target: one `t3.small` EC2 instance running `docker-compose.prod.yml`. Caddy ter
 with Let's Encrypt. GitHub Actions builds images, pushes them to GHCR and rolls out over SSH
 after CI passes on `main`.
 
+> **No AWS account?** Run it for free on your own machine and publish it through a free tunnel: [free-deployment.md](free-deployment.md).
+>
 > Status: the pipeline and files are ready. Creating the AWS resources and the first deploy
 > are manual one-time steps for the project owner (below). Record the public URL in the
 > README once it is live.

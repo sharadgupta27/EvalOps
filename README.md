@@ -139,6 +139,8 @@ AWS EC2 + Docker Compose + Caddy (automatic HTTPS), rolled out by
 images → GHCR → Trivy → SSH `compose pull && up -d --wait` (migrations run first) → health
 check. One-time setup and rollback: [docs/deployment.md](docs/deployment.md).
 
+No AWS account? Run it for free on your own machine (`docker-compose.selfhost.yml`) and, if CI needs to reach it, publish it through Tailscale Funnel or Cloudflare Tunnel: [docs/free-deployment.md](docs/free-deployment.md). CiteSure's CI gate was run against this stack (see CiteSure `docs/evalops-integration.md`).
+
 ## CI/CD
 
 | Workflow | Trigger | Jobs |

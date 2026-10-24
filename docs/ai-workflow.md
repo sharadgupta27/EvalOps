@@ -240,3 +240,11 @@ Each entry: goal · prompt or delegation · what the AI produced · what was rev
 Review the diffs and the *Author to confirm* rows in `security/pr-audit.md`; review the
 calibration labels; run the real-model calibration once; create the AWS resources and enable
 `DEPLOY_ENABLED`; record the demo video.
+
+
+### 2026-10-23 - Free self-hosting for the CiteSure connection
+
+- **Goal:** let EvalOps run for free and stay reachable from CiteSure's CI, without exposing CiteSure (which holds the documents).
+- **AI produced:** `docker-compose.selfhost.yml` (built from source, strong secrets required, ports bound to localhost, `funnel` and `tunnel` profiles for Tailscale Funnel and Cloudflare Tunnel), `deploy/tailscale-funnel.json`, `.env.selfhost.example`, `docs/free-deployment.md`; removed two empty stray folders left by a mistyped shell redirect (`ops;C`, `ops/loki.yaml;C`).
+- **Verification:** the stack was built and started from the new file; a project, a redacted dataset (40 cases), an API key and a gate policy were created through the API; CiteSure's results were ingested: first run passes and becomes the `main` baseline, an identical run passes with 0 regressions, a run with one worse question fails (exit 1). EvalOps stored only `[redacted]` / `[answered]` / `[refused]`.
+- **Not done:** the tailscale and cloudflared containers were not started (they need accounts); the public URL is still pending (README live URL).
