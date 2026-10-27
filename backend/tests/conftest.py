@@ -175,8 +175,10 @@ async def add_support_evaluators(api: Api, project_id: int) -> None:
 
 def pytest_asyncio_loop_factories(
     config: pytest.Config, item: pytest.Item
-) -> Mapping[str, Callable[[], asyncio.AbstractEventLoop]] | None:
+) -> Mapping[str, Callable[[], asyncio.AbstractEventLoop]]:
     # psycopg's async driver cannot run on Windows' default Proactor loop.
+    # pytest-asyncio rejects None from this hook, so other platforms must return
+    # the default loop explicitly.
     if sys.platform == "win32":
         return {"selector": asyncio.SelectorEventLoop}
-    return None
+    return {"default": asyncio.new_event_loop}

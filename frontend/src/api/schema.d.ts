@@ -770,7 +770,7 @@ export interface components {
             /** @description Matches the dataset case whose `inputs.case_ref` is equal */
             case_ref: string;
             output?: string | null;
-            /** @description Authoritative for the pass rate and for regressions */
+            /** @description Decides the pass rate and regressions. A result that also carries an `error` is stored as not passed. */
             passed: boolean;
             score: number;
             /** @default 0 */
