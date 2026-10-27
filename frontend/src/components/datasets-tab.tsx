@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useCreateDataset, useDatasets } from "../api/hooks";
-import { Button, Card, Empty, ErrorBanner, Field, Input, Loading } from "./ui";
+import { Badge, Button, Card, Empty, ErrorBanner, Field, Input, Loading } from "./ui";
 
 export function DatasetsTab({ projectId }: { projectId: number }) {
   const datasets = useDatasets(projectId);
@@ -20,16 +20,16 @@ export function DatasetsTab({ projectId }: { projectId: number }) {
           {datasets.isLoading && <Loading />}
           <ErrorBanner error={datasets.error} />
           {datasets.data?.length === 0 && <Empty>No datasets yet.</Empty>}
-          <ul className="divide-y divide-slate-100">
+          <ul className="space-y-2">
             {datasets.data?.map((d) => (
-              <li key={d.id} className="flex items-center justify-between py-3">
+              <li key={d.id}>
                 <Link
                   to={`/datasets/${d.id}?project=${projectId}`}
-                  className="font-medium text-indigo-700 hover:underline"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-indigo-300 hover:bg-indigo-50/50"
                 >
-                  {d.name}
+                  <span className="font-medium text-slate-900">{d.name}</span>
+                  <Badge>{d.case_count} cases</Badge>
                 </Link>
-                <span className="text-sm text-slate-500">{d.case_count} cases</span>
               </li>
             ))}
           </ul>

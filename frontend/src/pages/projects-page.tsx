@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useCreateProject, useProjects } from "../api/hooks";
+import { Icon } from "../components/Icon";
 import { PageHeader } from "../components/layout";
 import { Button, Card, Empty, ErrorBanner, Field, Input, Loading } from "../components/ui";
 
@@ -12,7 +13,15 @@ export function ProjectsPage() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    create.mutate({ name, description }, { onSuccess: () => (setName(""), setDescription("")) });
+    create.mutate(
+      { name, description },
+      {
+        onSuccess: () => {
+          setName("");
+          setDescription("");
+        },
+      },
+    );
   }
 
   return (
@@ -29,12 +38,28 @@ export function ProjectsPage() {
             {projects.data?.length === 0 && (
               <Empty>No projects yet. Create one to get started.</Empty>
             )}
-            <ul className="divide-y divide-slate-100">
+            <ul className="space-y-2">
               {projects.data?.map((p) => (
                 <li key={p.id}>
-                  <Link to={`/projects/${p.id}`} className="block px-1 py-3 hover:bg-slate-50">
-                    <div className="font-medium text-indigo-700">{p.name}</div>
-                    {p.description && <div className="text-sm text-slate-500">{p.description}</div>}
+                  <Link
+                    to={`/projects/${p.id}`}
+                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-indigo-300 hover:bg-indigo-50/50"
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                      <Icon name="chart" className="h-[18px] w-[18px]" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-slate-900">{p.name}</span>
+                      {p.description && (
+                        <span className="block truncate text-sm text-slate-500">
+                          {p.description}
+                        </span>
+                      )}
+                    </span>
+                    <Icon
+                      name="arrow"
+                      className="h-4 w-4 text-slate-300 transition-colors group-hover:text-indigo-600"
+                    />
                   </Link>
                 </li>
               ))}
@@ -61,6 +86,7 @@ export function ProjectsPage() {
             </Field>
             <ErrorBanner error={create.error} />
             <Button type="submit" disabled={create.isPending}>
+              <Icon name="plus" className="h-4 w-4" />
               Create project
             </Button>
           </form>

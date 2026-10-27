@@ -102,7 +102,7 @@ function ApiKeysCard({ projectId }: { projectId: number }) {
         </Button>
       </form>
       {create.data && (
-        <div className="mb-4 rounded-md bg-amber-50 p-3 text-sm ring-1 ring-amber-200">
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
           <p className="font-medium text-amber-800">
             Copy this key now. It will not be shown again.
           </p>
@@ -114,7 +114,7 @@ function ApiKeysCard({ projectId }: { projectId: number }) {
       <ErrorBanner error={keys.error ?? create.error ?? revoke.error} />
       <ul className="divide-y divide-slate-100 text-sm">
         {keys.data?.map((k) => (
-          <li key={k.id} className="flex items-center justify-between py-2">
+          <li key={k.id} className="flex items-center justify-between py-2.5">
             <span>
               {k.name} <code className="text-xs text-slate-500">{k.prefix}…</code>{" "}
               {k.revoked_at && <Badge tone="bad">revoked</Badge>}

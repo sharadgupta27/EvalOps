@@ -1,4 +1,4 @@
-// Small presentational building blocks shared by every page.
+// Small presentational building blocks shared by every page. The look mirrors CiteSure's ui.tsx.
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -13,18 +13,21 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "danger" | "ghost";
 };
 
+const VARIANTS: Record<NonNullable<ButtonProps["variant"]>, string> = {
+  primary:
+    "bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:shadow-none",
+  secondary:
+    "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 disabled:text-slate-400",
+  danger: "border border-red-200 bg-white text-red-600 hover:bg-red-50 disabled:text-red-300",
+  ghost: "text-slate-600 hover:bg-slate-100",
+};
+
 export function Button({ variant = "primary", className, ...props }: ButtonProps) {
-  const styles = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-500 disabled:bg-indigo-300",
-    secondary: "bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50",
-    danger: "bg-white text-rose-600 ring-1 ring-rose-200 hover:bg-rose-50",
-    ghost: "text-slate-600 hover:bg-slate-100",
-  }[variant];
   return (
     <button
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed",
-        styles,
+        "inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed",
+        VARIANTS[variant],
         className,
       )}
       {...props}
@@ -44,14 +47,16 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={cx("rounded-lg bg-white shadow-xs ring-1 ring-slate-200", className)}>
+    <section
+      className={cx("rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft", className)}
+    >
       {(title || actions) && (
-        <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
-          <div className="flex gap-2">{actions}</div>
+        <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
         </header>
       )}
-      <div className="p-4">{children}</div>
+      {children}
     </section>
   );
 }
@@ -74,27 +79,30 @@ export function Field({
   );
 }
 
-const inputClass =
-  "w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500";
+export const inputClass =
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
 
 export const Input = (props: InputHTMLAttributes<HTMLInputElement>) => (
   <input {...props} className={cx(inputClass, props.className)} />
 );
 
 export const TextArea = (props: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea {...props} className={cx(inputClass, "font-mono", props.className)} />
+  <textarea
+    {...props}
+    className={cx(inputClass, "font-mono text-xs leading-relaxed", props.className)}
+  />
 );
 
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={cx(inputClass, "bg-white", props.className)} />;
+  return <select {...props} className={cx(inputClass, props.className)} />;
 }
 
 const toneClass = {
-  good: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  warn: "bg-amber-50 text-amber-700 ring-amber-200",
-  bad: "bg-rose-50 text-rose-700 ring-rose-200",
-  none: "bg-slate-50 text-slate-600 ring-slate-200",
-  info: "bg-sky-50 text-sky-700 ring-sky-200",
+  good: "bg-emerald-100 text-emerald-800",
+  warn: "bg-amber-100 text-amber-800",
+  bad: "bg-red-100 text-red-800",
+  none: "bg-slate-100 text-slate-700",
+  info: "bg-sky-100 text-sky-800",
 };
 
 export function Badge({
@@ -107,7 +115,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         toneClass[tone],
       )}
     >
@@ -135,10 +143,10 @@ export function ScoreBadge({
 
 export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
-    <div className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
-      {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-soft">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{value}</p>
+      {sub && <p className="mt-1 text-xs text-slate-500">{sub}</p>}
     </div>
   );
 }
@@ -152,7 +160,13 @@ export function ProgressBar({ percent }: { percent: number }) {
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div className="h-full bg-indigo-500 transition-all" style={{ width: `${percent}%` }} />
+      <div
+        className={cx(
+          "h-full rounded-full transition-all",
+          percent >= 100 ? "bg-emerald-500" : "bg-indigo-500",
+        )}
+        style={{ width: `${percent}%` }}
+      />
     </div>
   );
 }
@@ -163,7 +177,7 @@ export function ErrorBanner({ error }: { error: unknown }) {
   return (
     <div
       role="alert"
-      className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200"
+      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
     >
       {message}
     </div>
@@ -171,9 +185,18 @@ export function ErrorBanner({ error }: { error: unknown }) {
 }
 
 export function Loading({ label = "Loading…" }: { label?: string }) {
-  return <p className="py-6 text-center text-sm text-slate-500">{label}</p>;
+  return (
+    <span className="inline-flex items-center gap-2 py-4 text-sm text-slate-500" role="status">
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      {label}
+    </span>
+  );
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="py-6 text-center text-sm text-slate-500">{children}</p>;
+  return (
+    <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-6 text-center text-sm text-slate-500">
+      {children}
+    </p>
+  );
 }

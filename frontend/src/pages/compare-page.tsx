@@ -18,9 +18,9 @@ export function ComparePage() {
   const d = cmp.data;
   const verdict = compareVerdict(d.counts, d.pass_rate_delta);
   const verdictClass = {
-    good: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-    bad: "bg-rose-50 text-rose-800 ring-rose-200",
-    neutral: "bg-slate-50 text-slate-700 ring-slate-200",
+    good: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    bad: "border-red-200 bg-red-50 text-red-800",
+    neutral: "border-slate-200 bg-white text-slate-700",
   }[verdict.tone];
 
   return (
@@ -31,7 +31,7 @@ export function ComparePage() {
         back={{ to: `/projects/${d.base.project_id}`, label: "Project" }}
       />
       <div
-        className={`mb-6 rounded-lg px-4 py-3 text-sm font-medium ring-1 ${verdictClass}`}
+        className={`mb-6 rounded-2xl border px-4 py-3 text-sm font-medium ${verdictClass}`}
         data-testid="compare-verdict"
       >
         {verdict.text}

@@ -48,17 +48,17 @@ export function ProjectPage() {
           </Button>
         }
       />
-      <div role="tablist" className="mb-4 flex gap-1 border-b border-slate-200">
+      <div role="tablist" className="mb-6 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
             key={t.id}
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id })}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
               tab === t.id
-                ? "border-indigo-600 text-indigo-700"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "border-indigo-300 bg-indigo-50 text-indigo-800"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
             {t.label}

@@ -45,7 +45,7 @@ export function RunPage() {
       />
       {!finished && (
         <Card className="mb-6">
-          <div className="mb-2 flex justify-between text-sm text-slate-600">
+          <div className="mb-2 flex justify-between text-sm font-medium text-slate-600">
             <span>Evaluating cases…</span>
             <span>
               {r.progress.done}/{r.progress.total}
@@ -91,64 +91,66 @@ export function RunPage() {
         <Card title="Results">
           {results.isLoading && <Loading />}
           <ErrorBanner error={results.error} />
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-slate-500">
-              <tr>
-                <th className="py-2">Case</th>
-                <th>Result</th>
-                <th className="text-right">Score</th>
-                <th className="text-right">Latency</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.data?.map((res) => (
-                <Fragment key={res.id}>
-                  <tr
-                    className="cursor-pointer border-t border-slate-100 hover:bg-slate-50"
-                    onClick={() => setOpen(open === res.id ? null : res.id)}
-                  >
-                    <td className="py-2 pr-2">
-                      #{res.test_case_id} {previewInputs(res.inputs, 70)}
-                    </td>
-                    <td>
-                      {res.error ? (
-                        <Badge tone="warn">error</Badge>
-                      ) : res.passed ? (
-                        <Badge tone="good">pass</Badge>
-                      ) : (
-                        <Badge tone="bad">fail</Badge>
-                      )}
-                    </td>
-                    <td className="text-right font-mono">{formatScore(res.score)}</td>
-                    <td className="text-right font-mono text-xs">
-                      {formatLatency(res.latency_ms)}
-                    </td>
-                  </tr>
-                  {open === res.id && (
-                    <tr className="bg-slate-50">
-                      <td colSpan={4} className="space-y-2 p-3 text-xs">
-                        {res.error && <ErrorBanner error={res.error} />}
-                        <div>
-                          <span className="font-semibold text-slate-500">Output</span>
-                          <pre className="mt-1 whitespace-pre-wrap rounded-sm bg-white p-2 ring-1 ring-slate-200">
-                            {res.output ?? "(none)"}
-                          </pre>
-                        </div>
-                        <ul className="space-y-1">
-                          {res.scores.map((sc) => (
-                            <li key={sc.evaluator}>
-                              <Badge tone={sc.passed ? "good" : "bad"}>{sc.evaluator}</Badge>{" "}
-                              <span className="text-slate-600">{sc.reason}</span>
-                            </li>
-                          ))}
-                        </ul>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm [&_td]:pr-4 [&_th]:whitespace-nowrap [&_th]:pr-4">
+              <thead className="text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="py-2">Case</th>
+                  <th>Result</th>
+                  <th className="text-right">Score</th>
+                  <th className="text-right">Latency</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {results.data?.map((res) => (
+                  <Fragment key={res.id}>
+                    <tr
+                      className="cursor-pointer hover:bg-slate-50/70"
+                      onClick={() => setOpen(open === res.id ? null : res.id)}
+                    >
+                      <td className="py-2 pr-2">
+                        #{res.test_case_id} {previewInputs(res.inputs, 70)}
+                      </td>
+                      <td>
+                        {res.error ? (
+                          <Badge tone="warn">error</Badge>
+                        ) : res.passed ? (
+                          <Badge tone="good">pass</Badge>
+                        ) : (
+                          <Badge tone="bad">fail</Badge>
+                        )}
+                      </td>
+                      <td className="text-right font-mono">{formatScore(res.score)}</td>
+                      <td className="text-right font-mono text-xs">
+                        {formatLatency(res.latency_ms)}
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+                    {open === res.id && (
+                      <tr className="bg-slate-50/70">
+                        <td colSpan={4} className="space-y-2 p-4 text-xs">
+                          {res.error && <ErrorBanner error={res.error} />}
+                          <div>
+                            <span className="font-semibold text-slate-500">Output</span>
+                            <pre className="mt-1 whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-3">
+                              {res.output ?? "(none)"}
+                            </pre>
+                          </div>
+                          <ul className="space-y-1">
+                            {res.scores.map((sc) => (
+                              <li key={sc.evaluator}>
+                                <Badge tone={sc.passed ? "good" : "bad"}>{sc.evaluator}</Badge>{" "}
+                                <span className="text-slate-600">{sc.reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
     </>

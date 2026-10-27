@@ -42,44 +42,46 @@ export function DatasetPage() {
             <ErrorBanner error={cases.error ?? del.error} />
             {cases.data?.length === 0 && <Empty>No cases yet. Import a file or add one.</Empty>}
             {!!cases.data?.length && (
-              <table className="w-full text-left text-sm">
-                <thead className="text-xs uppercase text-slate-500">
-                  <tr>
-                    <th className="py-2">Inputs</th>
-                    <th>Expected</th>
-                    <th>Tags</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {cases.data.map((c) => (
-                    <tr key={c.id} className="border-t border-slate-100 align-top">
-                      <td className="py-2 pr-2">
-                        <pre className="whitespace-pre-wrap text-xs">
-                          {JSON.stringify(c.inputs, null, 1)}
-                        </pre>
-                      </td>
-                      <td className="pr-2 text-xs">
-                        {c.expected_output ?? <span className="text-slate-400">none</span>}
-                      </td>
-                      <td>
-                        {c.tags.map((t) => (
-                          <Badge key={t}>{t}</Badge>
-                        ))}
-                      </td>
-                      <td>
-                        <Button
-                          variant="ghost"
-                          onClick={() => del.mutate(c.id)}
-                          aria-label={`Delete case ${c.id}`}
-                        >
-                          ✕
-                        </Button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm [&_td]:pr-4 [&_th]:whitespace-nowrap [&_th]:pr-4">
+                  <thead className="text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="py-2">Inputs</th>
+                      <th>Expected</th>
+                      <th>Tags</th>
+                      <th />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {cases.data.map((c) => (
+                      <tr key={c.id} className="align-top hover:bg-slate-50/70">
+                        <td className="py-2 pr-2">
+                          <pre className="whitespace-pre-wrap text-xs">
+                            {JSON.stringify(c.inputs, null, 1)}
+                          </pre>
+                        </td>
+                        <td className="pr-2 text-xs">
+                          {c.expected_output ?? <span className="text-slate-400">none</span>}
+                        </td>
+                        <td>
+                          {c.tags.map((t) => (
+                            <Badge key={t}>{t}</Badge>
+                          ))}
+                        </td>
+                        <td>
+                          <Button
+                            variant="ghost"
+                            onClick={() => del.mutate(c.id)}
+                            aria-label={`Delete case ${c.id}`}
+                          >
+                            ✕
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Card>
         </div>
@@ -114,7 +116,7 @@ function ImportCard({ datasetId }: { datasetId: number }) {
           accept=".csv,.jsonl,.ndjson"
           aria-label="Dataset file"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm"
+          className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border file:border-slate-200 file:bg-white file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-slate-700 file:shadow-sm hover:file:bg-slate-50"
         />
         <ErrorBanner error={importer.error} />
         <Button type="submit" disabled={!file || importer.isPending}>
@@ -124,7 +126,7 @@ function ImportCard({ datasetId }: { datasetId: number }) {
           <div className="text-sm" data-testid="import-report">
             <p className="text-emerald-700">Imported {importer.data.imported} case(s).</p>
             {importer.data.errors.map((err) => (
-              <p key={err.row} className="text-rose-600">
+              <p key={err.row} className="text-red-600">
                 Row {err.row}: {err.message}
               </p>
             ))}

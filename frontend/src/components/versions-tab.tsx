@@ -49,7 +49,7 @@ export function VersionsTab({ projectId }: { projectId: number }) {
               </span>
             }
           >
-            <pre className="whitespace-pre-wrap rounded-sm bg-slate-50 p-2 text-xs">
+            <pre className="whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs">
               {v.template}
             </pre>
             <div className="mt-2 flex flex-wrap gap-1 text-xs text-slate-500">
